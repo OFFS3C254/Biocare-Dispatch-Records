@@ -41,6 +41,10 @@ const NUM_COLUMNS = 5;          // Date, Order No, Customer, Status, Remarks
 const COLOR_ACCENT = "#0052FF";       // Electric Blue
 const COLOR_ACCENT_LIGHT = "#EBF2FF";
 const COLOR_FOREGROUND = "#0F172A";   // Deep Slate
+const COLOR_NAVY = "#0F172A";
+const COLOR_NAVY_LIGHT = "#EFF6FF";
+const COLOR_PINK = "#B45309";
+const COLOR_PINK_LIGHT = "#FEF3C7";
 const COLOR_MUTED = "#64748B";
 const COLOR_GREEN = "#059669";
 const COLOR_GREEN_LIGHT = "#D1FAE5";
@@ -56,22 +60,29 @@ function doGet(e) {
     return handleApiGet_(e);
   }
 
-  // Otherwise, serve the HTML frontend
-  let html;
+  // Otherwise, attempt serving the HTML frontend, or fallback gracefully to JSON status
   try {
-    html = HtmlService.createTemplateFromFile('Index').evaluate();
+    const html = HtmlService.createTemplateFromFile('Index').evaluate();
+    return html
+      .setTitle('Biocare Dispatch Portal')
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (err) {
     try {
-      html = HtmlService.createHtmlOutputFromFile('Index');
+      const html2 = HtmlService.createHtmlOutputFromFile('Index');
+      return html2
+        .setTitle('Biocare Dispatch Portal')
+        .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     } catch (err2) {
-      html = HtmlService.createHtmlOutputFromFile('index');
+      return createJsonResponse_({
+        success: true,
+        status: "Biocare Dispatch Webhook API is Live",
+        message: "To access the portal user interface, open your Vercel deployment URL.",
+        endpoints: ["?action=getData&targetDate=DD-MM-YYYY", "?action=ping"]
+      });
     }
   }
-
-  return html
-    .setTitle('Biocare Dispatch Portal')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function doPost(e) {
@@ -381,22 +392,26 @@ function ensureDateSheet_(label) {
 }
 
 function applyConditionalFormatting_(sheet) {
-  const statusRange = sheet.getRange(DATA_START_ROW, 4, DATA_END_ROW - DATA_START_ROW + 1, 1);
-  const rules = [
-    SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo("Dispatched")
-      .setBackground(COLOR_NAVY_LIGHT).setFontColor(COLOR_NAVY)
-      .setRanges([statusRange]).build(),
-    SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo("Pending")
-      .setBackground(COLOR_PINK_LIGHT).setFontColor(COLOR_PINK)
-      .setRanges([statusRange]).build(),
-    SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo("To Be Dispatched Tomorrow")
-      .setBackground("#F3D9E8").setFontColor("#8E1550")
-      .setRanges([statusRange]).build()
-  ];
-  sheet.setConditionalFormatRules(rules);
+  try {
+    const statusRange = sheet.getRange(DATA_START_ROW, 4, DATA_END_ROW - DATA_START_ROW + 1, 1);
+    const rules = [
+      SpreadsheetApp.newConditionalFormatRule()
+        .whenTextEqualTo("Dispatched")
+        .setBackground(COLOR_NAVY_LIGHT).setFontColor(COLOR_NAVY)
+        .setRanges([statusRange]).build(),
+      SpreadsheetApp.newConditionalFormatRule()
+        .whenTextEqualTo("Pending")
+        .setBackground(COLOR_PINK_LIGHT).setFontColor(COLOR_PINK)
+        .setRanges([statusRange]).build(),
+      SpreadsheetApp.newConditionalFormatRule()
+        .whenTextEqualTo("To Be Dispatched Tomorrow")
+        .setBackground("#F3D9E8").setFontColor("#8E1550")
+        .setRanges([statusRange]).build()
+    ];
+    sheet.setConditionalFormatRules(rules);
+  } catch (fmtErr) {
+    Logger.log("Conditional formatting warning: " + fmtErr);
+  }
 }
 
 // ======================================================================
@@ -481,6 +496,7 @@ function addDispatchRecord(record, targetDate) {
     String(record.remarks || "").trim()
   ]]);
   applyConditionalFormatting_(sheet);
+  SpreadsheetApp.flush();
 
   return getAppData(label);
 }
@@ -504,6 +520,7 @@ function updateDispatchRecord(rowNumber, record, targetDate) {
     String(record.remarks || "").trim()
   ]]);
   applyConditionalFormatting_(sheet);
+  SpreadsheetApp.flush();
   return getAppData(label);
 }
 
@@ -519,6 +536,7 @@ function deleteDispatchRecord(rowNumber, targetDate) {
   }
 
   sheet.getRange(rowNumber, 2, 1, NUM_COLUMNS - 1).clearContent();
+  SpreadsheetApp.flush();
   return getAppData(label);
 }
 
@@ -542,19 +560,20 @@ function batchAddDispatchRecords(records, targetDate) {
     throw new Error(`Only ${emptyRowIndices.length} slots available on ${label}. You are trying to import ${records.length} records.`);
   }
 
+  const rowsData = records.map(r => [
+    label,
+    String(r.orderNo || r.orderRef || r.order_no || r.ref || r["Order Reference"] || r["Order No"] || "").trim(),
+    String(r.customer || r.facility || r.client || r.name || r["Customer"] || "").trim(),
+    String(r.status || "Dispatched").trim(),
+    String(r.remarks || "").trim()
+  ]);
+
   for (let k = 0; k < records.length; k++) {
-    const r = records[k];
-    const targetRow = emptyRowIndices[k];
-    sheet.getRange(targetRow, 1, 1, NUM_COLUMNS).setValues([[
-      label,
-      String(r.orderNo || r.orderRef || r.order_no || r.ref || r["Order Reference"] || r["Order No"] || "").trim(),
-      String(r.customer || r.facility || r.client || r.name || r["Customer"] || "").trim(),
-      String(r.status || "Dispatched").trim(),
-      String(r.remarks || "").trim()
-    ]]);
+    sheet.getRange(emptyRowIndices[k], 1, 1, NUM_COLUMNS).setValues([rowsData[k]]);
   }
 
   applyConditionalFormatting_(sheet);
+  SpreadsheetApp.flush();
   return getAppData(label);
 }
 
