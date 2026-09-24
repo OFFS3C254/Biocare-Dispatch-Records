@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Scratch & Temporary Logs
+scratch/
+*.log
+sample_report_preview.html
+images/logo_base64.txt
+_backups/
+.tempmediaStorage/
+
+# OS metadata
+Thumbs.db
+.DS_Store

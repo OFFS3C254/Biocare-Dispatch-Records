@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Biocare Health Systems — Daily Dispatch Portal</title>
+
+  <!-- Google Fonts: Dual-Font System (Calistoga + Inter + JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+  <!-- SheetJS for Client-Side Excel (.xlsx) Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <style>
+    /* ======================================================================
+       DESIGN SYSTEM: MINIMALIST MODERN
+       Clarity through structure, character through bold detail.
+       ====================================================================== */
+    :root {
+      --background: #FAFAFA;
+      --foreground: #0F172A;
+      --muted: #F1F5F9;
+      --muted-foreground: #64748B;
+      --accent: #0052FF;            /* Electric Blue */
+      --accent-secondary: #4D7CFF;  /* Sky Blue gradient endpoint */
+      --accent-foreground: #FFFFFF;
+      --border: #E2E8F0;
+      --card: #FFFFFF;
+      --ring: #0052FF;
+      --gradient-accent: linear-gradient(135deg, #0052FF 0%, #4D7CFF 100%);
+      --gradient-accent-h: linear-gradient(to right, #0052FF 0%, #4D7CFF 100%);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+      --shadow-lg: 0 12px 28px rgba(15, 23, 42, 0.09);
+      --shadow-accent: 0 4px 14px rgba(0, 82, 255, 0.25);
+      --shadow-accent-lg: 0 8px 24px rgba(0, 82, 255, 0.35);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
+      --font-display: 'Calistoga', Georgia, serif;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    /* Headings */
+    h1, h2, h3, .font-display {
+      font-family: var(--font-display);
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+
+    /* Gradient Text Highlight */
+    .gradient-text {
+      background: var(--gradient-accent-h);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      display: inline-block;
+    }
+
+    /* Inverted Header Section (Midnight Slate with Subtle Dot Texture) */
+    .brand-hero {
+      background-color: var(--foreground);
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      color: #FFFFFF;
+      padding: 20px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 24px rgba(15, 23, 42, 0.15);
+    }
+
+    .hero-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo-img {
+      height: 40px;
+      max-width: 190px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
+    }
+
+    .brand-divider {
+      height: 28px;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      color: #FFFFFF;
+    }
+
+    .brand-subtitle {
+      font-size: 0.76rem;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.65);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Section Label Pill Badge System */
+    .section-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(0, 82, 255, 0.3);
+      background: rgba(0, 82, 255, 0.08);
+      padding: 5px 14px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulseAnim 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseAnim {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.6; }
+    }
+
+    /* Header Action Controls */
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .conn-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius-pill);
+      padding: 7px 15px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+    }
+
+    .conn-pill:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    .status-dot.warning {
+      background: #F59E0B;
+      box-shadow: 0 0 8px #F59E0B;
+    }
+
+    /* Tactile Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      font-weight: 600;
+      padding: 9px 18px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Primary Accent Button: The Signature Gradient */
+    .btn-primary {
+      background: var(--gradient-accent);
+      color: #FFFFFF;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1.5px);
+      box-shadow: var(--shadow-accent-lg);
+      filter: brightness(1.05);
+    }
+
+    .btn-glass {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #FFFFFF;
+    }
+
+    .btn-glass:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      color: var(--foreground);
+    }
+
+    .btn-outline:hover {
+      background: var(--muted);
+      border-color: #CBD5E1;
+      transform: translateY(-1px);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Main Canvas */
+    .main-canvas {
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 32px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* Date Controller & Navigation Bar */
+    .navigator-bar {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 16px 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .nav-left-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .date-picker-wrap {
+      display: flex;
+      align-items: center;
+      background: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      transition: border-color 0.15s ease;
+    }
+
+    .date-picker-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.12);
+    }
+
+    .date-input-field {
+      border: none;
+      background: transparent;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      color: var(--foreground);
+      font-size: 0.95rem;
+      outline: none;
+      cursor: pointer;
+      margin-left: 6px;
+    }
+
+    .sheet-dropdown {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 0.86rem;
+      color: var(--foreground);
+      padding: 8px 14px;
+      outline: none;
+      cursor: pointer;
+      max-width: 240px;
+      transition: border-color 0.15s ease;
+    }
+
+    .sheet-dropdown:focus {
+      border-color: var(--accent);
+    }
+
+    .sheet-state-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .sheet-state-badge.live {
+      background: #ECFDF5;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+
+    .sheet-state-badge.history {
+      background: #FFFBEB;
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+
+    /* KPI Summary Cards Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+    }
+
+    .metric-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: #CBD5E1;
+    }
+
+    .metric-card.accent-border::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; bottom: 0;
+      width: 4px;
+      background: var(--gradient-accent);
+    }
+
+    .metric-icon-box {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      background: var(--gradient-accent);
+      color: #FFFFFF;
+      box-shadow: var(--shadow-accent);
+      flex-shrink: 0;
+    }
+
+    .metric-icon-box.emerald {
+      background: linear-gradient(135deg, #059669 0%, #10B981 100%);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+    }
+
+    .metric-icon-box.amber {
+      background: linear-gradient(135deg, #D97706 0%, #F59E0B 100%);
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.25);
+    }
+
+    .metric-icon-box.purple {
+      background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
+      box-shadow: 0 4px 14px rgba(168, 85, 247, 0.25);
+    }
+
+    .metric-data {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-label {
+      font-size: 0.76rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--muted-foreground);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .metric-num {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--foreground);
+      line-height: 1.15;
+      font-family: var(--font-sans);
+    }
+
+    /* Orders Management Surface */
+    .dispatch-surface {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .surface-toolbar {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      background: #FCFDFE;
+    }
+
+    /* Filter Tabs */
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-pill);
+      padding: 7px 16px;
+      font-family: var(--font-sans);
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--muted-foreground);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .filter-btn:hover {
+      background: var(--muted);
+      color: var(--foreground);
+    }
+
+    .filter-btn.active {
+      background: var(--foreground);
+      color: #FFFFFF;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .filter-count {
+      background: rgba(0, 0, 0, 0.08);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+    }
+
+    .filter-btn.active .filter-count {
+      background: rgba(255, 255, 255, 0.22);
+      color: #FFFFFF;
+    }
+
+    /* Search Bar */
+    .search-wrap {
+      position: relative;
+      min-width: 280px;
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .search-wrap i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted-foreground);
+      font-size: 0.95rem;
+    }
+
+    .search-field {
+      width: 100%;
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 9px 14px 9px 38px;
+      font-family: var(--font-sans);
+      font-size: 0.88rem;
+      color: var(--foreground);
+      outline: none;
+      transition: all 0.15s ease;
+    }
+
+    .search-field:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.12);
+    }
+
+    /* Table Styles */
+    .table-container {
+      overflow-x: auto;
+      min-height: 280px;
+    }
+
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .orders-table th {
+      background: #F8FAFC;
+      color: var(--muted-foreground);
+      font-family: var(--font-mono);
+      font-size: 0.74rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 13px 22px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .orders-table td {
+      padding: 14px 22px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .orders-table tbody tr {
+      transition: background-color 0.12s ease;
+    }
+
+    .orders-table tbody tr:hover {
+      background-color: #F8FAFC;
+    }
+
+    .order-code-badge {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(0, 82, 255, 0.08);
+      border: 1px solid rgba(0, 82, 255, 0.2);
+      padding: 4px 9px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      letter-spacing: 0.02em;
+      display: inline-block;
+    }
+
+    .customer-title {
+      font-weight: 600;
+      color: var(--foreground);
+    }
+
+    /* Status Pills */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .status-pill:hover {
+      transform: translateY(-1px);
+      filter: brightness(0.96);
+    }
+
+    .status-pill.Dispatched {
+      background: #ECFDF5;
+      color: #065F46;
+      border-color: #A7F3D0;
+    }
+
+    .status-pill.Pending {
+      background: #FFFBEB;
+      color: #92400E;
+      border-color: #FDE68A;
+    }
+
+    .status-pill.To\ Be\ Dispatched\ Tomorrow,
+    .status-pill.Tomorrow {
+      background: #F5F3FF;
+      color: #5B21B6;
+      border-color: #DDD6FE;
+    }
+
+    .remark-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--muted);
+      color: var(--foreground);
+      padding: 4px 10px;
+      border-radius: var(--radius-md);
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .row-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .action-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted-foreground);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .action-btn:hover {
+      background: var(--muted);
+      color: var(--accent);
+      border-color: var(--border);
+    }
+
+    .action-btn.del:hover {
+      background: #FEF2F2;
+      color: #DC2626;
+      border-color: #FECACA;
+    }
+
+    /* Empty state */
+    .empty-placeholder {
+      padding: 64px 20px;
+      text-align: center;
+      color: var(--muted-foreground);
+    }
+
+    .empty-placeholder i {
+      font-size: 3rem;
+      color: #CBD5E1;
+      margin-bottom: 14px;
+      display: block;
+    }
+
+    .empty-placeholder h3 {
+      font-size: 1.2rem;
+      font-family: var(--font-display);
+      color: var(--foreground);
+      margin-bottom: 6px;
+    }
+
+    /* Modals & Dialogs */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-container {
+      background: #FFFFFF;
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 600px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+      animation: modalEntrance 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-container.wide {
+      max-width: 820px;
+    }
+
+    @keyframes modalEntrance {
+      from { transform: translateY(16px) scale(0.97); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    .modal-top {
+      padding: 20px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #FAFCFE;
+    }
+
+    .modal-top h3 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      color: var(--foreground);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .modal-content-body {
+      padding: 26px 28px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .modal-actions-bar {
+      padding: 18px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #FAFCFE;
+    }
+
+    /* Forms */
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--foreground);
+    }
+
+    .text-input {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-family: var(--font-sans);
+      font-size: 0.92rem;
+      color: var(--foreground);
+      outline: none;
+      transition: all 0.15s ease;
+      width: 100%;
+    }
+
+    .text-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.12);
+    }
+
+    /* Dropzone */
+    .file-dropzone {
+      border: 2px dashed #CBD5E1;
+      border-radius: var(--radius-lg);
+      padding: 38px 24px;
+      text-align: center;
+      background: #F8FAFC;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .file-dropzone:hover, .file-dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(0, 82, 255, 0.04);
+    }
+
+    .file-dropzone i {
+      font-size: 2.6rem;
+      color: var(--accent);
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* Toast Notification System */
+    .toast-box-wrap {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast-notification {
+      pointer-events: auto;
+      background: var(--foreground);
+      color: #FFFFFF;
+      padding: 14px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: toastSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      border-left: 4px solid var(--accent);
+    }
+
+    .toast-notification.success { border-left-color: #10B981; }
+    .toast-notification.error { border-left-color: #EF4444; }
+
+    @keyframes toastSlide {
+      from { transform: translateX(40px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* Loader Overlay */
+    .loading-curtain {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(250, 250, 250, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 1500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .spinner-ring {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(0, 82, 255, 0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Print Stylesheet */
+    @media print {
+      .brand-hero, .navigator-bar, .surface-toolbar, .row-actions, .btn, .conn-pill, .toast-box-wrap {
+        display: none !important;
+      }
+      body {
+        background: #FFFFFF;
+        color: #000000;
+      }
+      .main-canvas {
+        padding: 0;
+        max-width: 100%;
+      }
+      .dispatch-surface {
+        border: none;
+        box-shadow: none;
+      }
+      .print-manifest-header {
+        display: block !important;
+        margin-bottom: 24px;
+        text-align: center;
+      }
+      .orders-table th {
+        background: #0F172A !important;
+        color: #FFFFFF !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    }
+
+    .print-manifest-header {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Inverted Contrast Header: Minimalist Modern -->
+  <header class="brand-hero">
+    <div class="hero-container">
+      <div class="brand-group">
+        <!-- Authentic Biocare Logo from /images -->
+        <img src="images/biocare-logo.png" alt="Biocare Health Systems Ltd." class="brand-logo-img" onerror="this.onerror=null; this.src='images/biocare%20logo.png';">
+        <div class="brand-divider"></div>
+        <div class="brand-text">
+          <h1 class="brand-title">Biocare Health Systems</h1>
+          <span class="brand-subtitle">
+            <span class="pulse-dot"></span>
+            Daily Dispatch Management Portal
+          </span>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <!-- Google Sheets Cloud Connection Indicator -->
+        <div class="conn-pill" id="conn-pill" onclick="openConnectionModal()" title="Configure Google Sheets Cloud Webhook">
+          <span class="status-dot" id="conn-status-dot"></span>
+          <span id="conn-status-text">Connecting...</span>
+          <i class="bi bi-cloud-check ms-1"></i>
+        </div>
+
+        <button class="btn btn-glass" onclick="reloadCurrentData()" title="Sync live orders from Google Sheet">
+          <i class="bi bi-arrow-clockwise" id="refresh-icon"></i> Refresh
+        </button>
+
+        <button class="btn btn-glass" onclick="openModal('modal-report-hub')" title="Generate evening report, PDF & email">
+          <i class="bi bi-file-earmark-pdf"></i> Report &amp; Email Hub
+        </button>
+
+        <button class="btn btn-glass" onclick="openModal('modal-import-hub')" title="Batch import orders from Excel">
+          <i class="bi bi-file-earmark-excel"></i> Import Orders
+        </button>
+
+        <button class="btn btn-primary" onclick="openAddOrderModal()">
+          <i class="bi bi-plus-lg"></i> New Order
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Canvas -->
+  <main class="main-canvas">
+
+    <!-- Printable Header Manifest -->
+    <div class="print-manifest-header">
+      <h2 style="font-family:var(--font-display); font-size:1.8rem; color:#0F172A;">Biocare Health Systems Ltd.</h2>
+      <h4 style="color:#0052FF; font-size:1.1rem; margin-top:4px;" id="print-sub-title">Daily Dispatch Manifest</h4>
+      <p style="color:#64748B; font-size:0.82rem; margin-top:2px;" id="print-time-stamp"></p>
+    </div>
+
+    <!-- Date Navigation & Action Strip -->
+    <section class="navigator-bar">
+      <div class="nav-left-group">
+        <!-- Previous Day Button -->
+        <button class="btn btn-outline btn-sm" onclick="changeDateOffset(-1)" title="Previous Day">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+
+        <!-- Date Input Picker -->
+        <div class="date-picker-wrap">
+          <i class="bi bi-calendar3 text-muted"></i>
+          <input type="date" id="datePicker" class="date-input-field" onchange="onDateChanged(this.value)">
+        </div>
+
+        <!-- Next Day Button -->
+        <button class="btn btn-outline btn-sm" onclick="changeDateOffset(1)" title="Next Day">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+
+        <!-- Jump to Today -->
+        <button class="btn btn-outline btn-sm" onclick="jumpToToday()">
+          <i class="bi bi-calendar-check"></i> Today
+        </button>
+
+        <!-- Sheet State Badge -->
+        <div id="sheet-status-badge" class="sheet-state-badge live">
+          <span class="pulse-dot"></span> Today's Live Sheet
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <!-- Historical Sheets Dropdown -->
+        <select id="pastSheetsSelect" class="sheet-dropdown" onchange="onHistoricalSheetPicked(this.value)">
+          <option value="">📂 Historical Sheets...</option>
+        </select>
+
+        <button class="btn btn-outline btn-sm" onclick="openModal('modal-remarks-manager')" title="Manage courier & remark options">
+          <i class="bi bi-tags"></i> Remarks
+        </button>
+      </div>
+    </section>
+
+    <!-- KPI Metric Cards Grid -->
+    <section class="metrics-grid">
+      <div class="metric-card accent-border">
+        <div class="metric-icon-box">
+          <i class="bi bi-boxes"></i>
+        </div>
+        <div class="metric-data">
+          <span class="metric-label">Total Orders</span>
+          <span class="metric-num" id="stat-total">0</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-box emerald">
+          <i class="bi bi-truck"></i>
+        </div>
+        <div class="metric-data">
+          <span class="metric-label">Dispatched</span>
+          <span class="metric-num" id="stat-dispatched" style="color:#059669;">0</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-box amber">
+          <i class="bi bi-hourglass-split"></i>
+        </div>
+        <div class="metric-data">
+          <span class="metric-label">Pending</span>
+          <span class="metric-num" id="stat-pending" style="color:#D97706;">0</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-box purple">
+          <i class="bi bi-arrow-right-circle"></i>
+        </div>
+        <div class="metric-data">
+          <span class="metric-label">Tomorrow</span>
+          <span class="metric-num" id="stat-tomorrow" style="color:#7C3AED;">0</span>
+        </div>
+      </div>
+
+      <div class="metric-card">
+        <div class="metric-icon-box" style="background:linear-gradient(135deg, #1E293B, #334155); box-shadow:none;">
+          <i class="bi bi-stack"></i>
+        </div>
+        <div class="metric-data">
+          <span class="metric-label">Slot Capacity</span>
+          <span class="metric-num" id="stat-capacity" style="font-size:1.4rem;">100 / 100</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Orders Surface -->
+    <section class="dispatch-surface">
+      <div class="surface-toolbar">
+        <!-- Status Filter Tabs -->
+        <div class="filter-group">
+          <button class="filter-btn active" onclick="applyStatusFilter('ALL', this)">
+            All Dispatches <span class="filter-count" id="count-all">0</span>
+          </button>
+          <button class="filter-btn" onclick="applyStatusFilter('Dispatched', this)">
+            Dispatched <span class="filter-count" id="count-dispatched">0</span>
+          </button>
+          <button class="filter-btn" onclick="applyStatusFilter('Pending', this)">
+            Pending <span class="filter-count" id="count-pending">0</span>
+          </button>
+          <button class="filter-btn" onclick="applyStatusFilter('To Be Dispatched Tomorrow', this)">
+            Tomorrow <span class="filter-count" id="count-tomorrow">0</span>
+          </button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="search-wrap">
+          <i class="bi bi-search"></i>
+          <input type="text" id="searchInput" class="search-field" placeholder="Search order reference, facility, courier..." oninput="handleSearch(this.value)">
+        </div>
+      </div>
+
+      <!-- Orders Data Table -->
+      <div class="table-container">
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th style="width: 48px;">#</th>
+              <th style="width: 140px;">Order No</th>
+              <th>Customer / Facility / Client</th>
+              <th style="width: 180px;">Dispatch Status</th>
+              <th style="width: 220px;">Courier / Remarks</th>
+              <th style="width: 90px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody">
+            <!-- Dynamic Content -->
+          </tbody>
+        </table>
+
+        <!-- Empty State Message -->
+        <div id="empty-state" class="empty-placeholder" style="display:none;">
+          <i class="bi bi-inbox-fill"></i>
+          <h3>No Orders Found</h3>
+          <p>No dispatches recorded for this date matching your filter.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: Add / Edit Order -->
+  <div class="modal-overlay" id="modal-order-editor">
+    <div class="modal-container">
+      <div class="modal-top">
+        <h3 id="modal-order-heading"><i class="bi bi-plus-circle text-primary"></i> Add Dispatch Order</h3>
+        <button class="action-btn" onclick="closeModal('modal-order-editor')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <form id="order-form" onsubmit="handleOrderSubmit(event)">
+        <div class="modal-content-body">
+          <input type="hidden" id="edit-row-number" value="">
+
+          <div class="input-group">
+            <label class="input-label" for="form-order-no">Order Reference / Number *</label>
+            <input type="text" id="form-order-no" class="text-input" placeholder="e.g. S22329 or 10452" required autofocus>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" for="form-customer">Customer / Facility Name *</label>
+            <input type="text" id="form-customer" class="text-input" list="facility-suggestions" placeholder="e.g. DIANI BEACH HOSPITAL" required autocomplete="off">
+            <datalist id="facility-suggestions"></datalist>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" for="form-status">Dispatch Status</label>
+            <select id="form-status" class="text-input">
+              <option value="Dispatched">Dispatched</option>
+              <option value="Pending">Pending</option>
+              <option value="To Be Dispatched Tomorrow">To Be Dispatched Tomorrow</option>
+            </select>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" for="form-remarks">Courier / Delivery Remarks</label>
+            <select id="form-remarks" class="text-input">
+              <option value="">-- Select Remark --</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions-bar">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-order-editor')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btn-save-order"><i class="bi bi-check2"></i> Save Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Report Hub (PDF Generation & Direct Emailing) -->
+  <div class="modal-overlay" id="modal-report-hub">
+    <div class="modal-container" style="max-width: 580px;">
+      <div class="modal-top">
+        <h3><i class="bi bi-file-earmark-pdf text-primary"></i> Daily Dispatch Report &amp; Email</h3>
+        <button class="action-btn" onclick="closeModal('modal-report-hub')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-content-body">
+        <!-- Summary Box -->
+        <div style="background:rgba(0, 82, 255, 0.05); padding:16px 20px; border-radius:var(--radius-md); border-left:4px solid var(--accent);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="font-family:var(--font-display); font-size:1.15rem; color:var(--foreground);" id="report-hub-date">
+              Daily Report — --
+            </div>
+            <span class="badge-status-pill dispatched" id="report-hub-status-badge">Official Manifest</span>
+          </div>
+          <p style="font-size:0.84rem; color:var(--muted-foreground); margin-top:4px;" id="report-hub-summary">
+            Generating official dispatch manifest
+          </p>
+          <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-top:12px;" id="report-hub-stats-grid">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Remarks Breakdown -->
+        <div>
+          <h4 style="font-family:var(--font-mono); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted-foreground); margin-bottom:8px;">
+            Courier &amp; Delivery Distribution Breakdown
+          </h4>
+          <div id="report-remarks-tally" style="display:flex; flex-wrap:wrap; gap:6px; max-height:140px; overflow-y:auto;">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Automated Email PDF Section -->
+        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:36px; height:36px; border-radius:8px; background:var(--gradient-accent); display:flex; align-items:center; justify-content:center; color:#FFFFFF; font-size:1.1rem;">
+              <i class="bi bi-envelope-fill"></i>
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--foreground);">Email PDF Report to Team</div>
+              <div style="font-size:0.78rem; color:var(--muted-foreground);">Generates executive PDF and sends email attachment via Google Workspace</div>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label" for="report-email-recipients">Recipient Emails (comma-separated):</label>
+            <input type="text" id="report-email-recipients" class="text-input" placeholder="biocarehealthsystems@gmail.com, alexandremuithya@gmail.com">
+            <span style="font-size:0.75rem; color:var(--muted-foreground); margin-top:4px;">
+              Configured recipient list. Separate multiple emails with commas.
+            </span>
+          </div>
+
+          <button type="button" class="btn btn-primary" id="btn-email-pdf" onclick="executeEmailReport()" style="width:100%; justify-content:center; height:46px;">
+            <i class="bi bi-send-fill"></i> Generate PDF &amp; Send Email
+          </button>
+        </div>
+
+        <!-- PDF Preview & Print Card -->
+        <div style="background:#FFFFFF; border:1px solid var(--border); border-radius:var(--radius-md); padding:16px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:34px; height:34px; border-radius:8px; background:#EFF6FF; border:1px solid #BFDBFE; display:flex; align-items:center; justify-content:center; color:#0052FF; font-size:1.1rem;">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:0.88rem; color:var(--foreground);">Preview &amp; Save / Print PDF</div>
+              <div style="font-size:0.76rem; color:var(--muted-foreground);">Open high-fidelity restyled PDF layout for immediate preview or print</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline btn-sm" onclick="openRestyledPdfPreview()">
+            <i class="bi bi-eye"></i> Preview / Print
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-actions-bar">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-report-hub')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Batch Order Importer (Excel & Clipboard) -->
+  <div class="modal-overlay" id="modal-import-hub">
+    <div class="modal-container wide">
+      <div class="modal-top">
+        <h3><i class="bi bi-file-earmark-excel text-primary"></i> Batch Order Importer</h3>
+        <button class="action-btn" onclick="closeModal('modal-import-hub')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-content-body">
+        <p style="font-size:0.86rem; color:var(--muted-foreground);">
+          Batch insert orders into <strong id="import-target-date" style="color:var(--accent);">--</strong>. Supports Odoo/ERP spreadsheets, <code>sample_orders.xlsx</code>, or pasted tabular rows.
+        </p>
+
+        <!-- Dropzone -->
+        <div class="file-dropzone" id="file-dropzone" onclick="document.getElementById('excel-file-input').click()">
+          <i class="bi bi-cloud-arrow-up"></i>
+          <h4 style="font-family:var(--font-display); font-size:1.15rem; color:var(--foreground);">Drag &amp; Drop Excel (.xlsx) file here</h4>
+          <p style="font-size:0.82rem; color:var(--muted-foreground); margin-top:4px;">or click to browse from your device</p>
+          <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" style="display:none;" onchange="handleExcelUpload(this.files[0])">
+        </div>
+
+        <div style="text-align:center; font-family:var(--font-mono); font-size:0.75rem; font-weight:700; color:var(--muted-foreground); text-transform:uppercase; letter-spacing:0.1em;">
+          — OR PASTE TABULAR DATA DIRECTLY —
+        </div>
+
+        <div class="input-group">
+          <textarea id="paste-input-field" class="text-input" rows="3" placeholder="Paste copied rows from Excel or Google Sheets here (Order Reference | Customer)..." oninput="handlePastedTableData(this.value)"></textarea>
+        </div>
+
+        <!-- Preview Table -->
+        <div id="import-preview-container" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:700; text-transform:uppercase; color:var(--muted-foreground);">
+              Parsed Orders Preview (<span id="preview-total-count" style="color:var(--accent);">0</span> items)
+            </div>
+            <span id="capacity-validation-text" style="font-size:0.8rem; font-weight:700;"></span>
+          </div>
+
+          <div style="max-height:220px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-md);">
+            <table class="orders-table" style="font-size:0.84rem;">
+              <thead>
+                <tr>
+                  <th>Order No</th>
+                  <th>Customer / Facility</th>
+                  <th>Status</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="preview-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions-bar">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-import-hub')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btn-submit-import" onclick="executeBatchImport()" disabled>
+          <i class="bi bi-box-arrow-in-down"></i> Import to Sheet
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Courier & Remarks Manager -->
+  <div class="modal-overlay" id="modal-remarks-manager">
+    <div class="modal-container">
+      <div class="modal-top">
+        <h3><i class="bi bi-tags text-primary"></i> Courier &amp; Remarks Options</h3>
+        <button class="action-btn" onclick="closeModal('modal-remarks-manager')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-content-body">
+        <p style="font-size:0.85rem; color:var(--muted-foreground);">
+          Manage delivery options used across dispatches (synced live with the <code>Settings</code> sheet).
+        </p>
+
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="new-remark-input" class="text-input" placeholder="e.g. Modern Coast, Fargo, Picked...">
+          <button type="button" class="btn btn-primary" onclick="addNewRemarkOption()"><i class="bi bi-plus-lg"></i> Add</button>
+        </div>
+
+        <div style="max-height:240px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-md); padding:12px; display:flex; flex-wrap:wrap; gap:8px;" id="remarks-chips-container">
+          <!-- Populated via JS -->
+        </div>
+      </div>
+      <div class="modal-actions-bar">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-remarks-manager')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Google Sheets Cloud Webhook Settings -->
+  <div class="modal-overlay" id="modal-cloud-connection">
+    <div class="modal-container">
+      <div class="modal-top">
+        <h3><i class="bi bi-cloud-check-fill text-primary"></i> Google Sheets Cloud Settings</h3>
+        <button class="action-btn" onclick="closeModal('modal-cloud-connection')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-content-body">
+        <p style="font-size:0.85rem; color:var(--muted-foreground);">
+          Connect this Vercel deployment directly to your live Biocare Dispatch Tracker Google Sheet.
+        </p>
+
+        <div class="input-group">
+          <label class="input-label" for="cfg-script-url">Google Apps Script Web App URL</label>
+          <input type="text" id="cfg-script-url" class="text-input" placeholder="https://script.google.com/macros/s/.../exec">
+          <small style="color:var(--muted-foreground); font-size:0.75rem;">
+            From Google Sheet: <em>Extensions &gt; Apps Script &gt; Deploy &gt; Web app (Access: Anyone)</em>.
+          </small>
+        </div>
+
+        <div style="background:#F8FAFC; border:1px solid var(--border); padding:14px; border-radius:var(--radius-md); font-size:0.82rem; line-height:1.5;">
+          <strong style="color:var(--foreground);"><i class="bi bi-shield-check text-primary me-1"></i> Multi-User Real-Time Sync:</strong><br>
+          Any team member accessing your Vercel URL gets live instant reads &amp; writes directly into the Google Sheet.
+        </div>
+      </div>
+      <div class="modal-actions-bar">
+        <button type="button" class="btn btn-outline" onclick="testCloudConnection()"><i class="bi bi-broadcast"></i> Test Ping</button>
+        <button type="button" class="btn btn-primary" onclick="saveCloudConnection()"><i class="bi bi-check-lg"></i> Save &amp; Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Tray -->
+  <div class="toast-box-wrap" id="toast-tray"></div>
+
+  <!-- Loading Curtain -->
+  <div class="loading-curtain" id="loader">
+    <div class="spinner-ring"></div>
+    <div style="font-family:var(--font-mono); font-size:0.88rem; font-weight:700; color:var(--foreground);" id="loader-status">
+      Syncing with Google Sheet...
+    </div>
+  </div>
+
+  <!-- Frontend JavaScript Logic -->
+  <script>
+    // State Management
+    const appState = {
+      activeDateStr: '',    // YYYY-MM-DD
+      activeLabel: '',      // DD-MM-YYYY
+      todayLabel: '',
+      isToday: true,
+      records: [],
+      filteredRecords: [],
+      activeFilter: 'ALL',
+      searchQuery: '',
+      remarksOptions: [],
+      availableDates: [],
+      facilities: [],
+      configs: {},
+      parsedUploads: [],
+      scriptUrl: localStorage.getItem('biocare_script_url') || '',
+      reportEmails: localStorage.getItem('biocare_report_emails') || 'biocarehealthsystems@gmail.com, alexandremuithya@gmail.com'
+    };
+
+    function isGoogleAppsScript() {
+      return typeof google !== 'undefined' && google && google.script && google.script.run;
+    }
+
+    // UI Initializer
+    window.addEventListener('DOMContentLoaded', () => {
+      initDate();
+      updateConnectionPill();
+      loadActiveSheetData();
+
+      // Setup dropzone listeners
+      const dropZone = document.getElementById('file-dropzone');
+      if (dropZone) {
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+          e.preventDefault();
+          dropZone.classList.remove('dragover');
+          if (e.dataTransfer.files && e.dataTransfer.files.length) {
+            handleExcelUpload(e.dataTransfer.files[0]);
+          }
+        });
+      }
+
+      // Pre-fill recipient emails
+      document.getElementById('report-email-recipients').value = appState.reportEmails;
+
+      // Auto-poll every 35s if viewing today's sheet
+      setInterval(() => {
+        if (appState.isToday && !document.getElementById('modal-order-editor').classList.contains('active')) {
+          loadActiveSheetData(true);
+        }
+      }, 35000);
+    });
+
+    function initDate() {
+      const now = new Date();
+      appState.activeDateStr = formatDateToInput(now);
+      appState.activeLabel = formatDateToLabel(appState.activeDateStr);
+      document.getElementById('datePicker').value = appState.activeDateStr;
+    }
+
+    function formatDateToInput(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function formatDateToLabel(str) {
+      if (!str) return '';
+      const parts = str.split('-');
+      if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      return str;
+    }
+
+    function parseLabelToInputDate(label) {
+      if (!label) return '';
+      const parts = label.split('-');
+      if (parts.length === 3 && parts[2].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      return label;
+    }
+
+    // UI Feedback: Toast & Loader
+    function showToast(msg, type = 'info') {
+      const tray = document.getElementById('toast-tray');
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${type}`;
+      const icon = type === 'success' ? 'bi-check-circle-fill' : type === 'error' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill';
+      toast.innerHTML = `<i class="bi ${icon}"></i> <span>${msg}</span>`;
+      tray.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+    }
+
+    function showLoader(text = 'Syncing...') {
+      document.getElementById('loader-status').innerText = text;
+      document.getElementById('loader').style.display = 'flex';
+      const icon = document.getElementById('refresh-icon');
+      if (icon) icon.classList.add('bi-spin');
+    }
+
+    function hideLoader() {
+      document.getElementById('loader').style.display = 'none';
+      const icon = document.getElementById('refresh-icon');
+      if (icon) icon.classList.remove('bi-spin');
+    }
+
+    function updateConnectionPill() {
+      const text = document.getElementById('conn-status-text');
+      const dot = document.getElementById('conn-status-dot');
+      if (isGoogleAppsScript()) {
+        text.innerText = 'Google Sheets (Native)';
+        dot.className = 'status-dot';
+      } else if (appState.scriptUrl || window.location.hostname.includes('vercel.app')) {
+        text.innerText = 'Google Sheets Cloud';
+        dot.className = 'status-dot';
+      } else {
+        text.innerText = 'Connect Google Sheet';
+        dot.className = 'status-dot warning';
+      }
+    }
+
+    function openConnectionModal() {
+      document.getElementById('cfg-script-url').value = appState.scriptUrl || '';
+      openModal('modal-cloud-connection');
+    }
+
+    // Cloud API Dispatcher
+    async function apiRequest(endpoint, method = 'GET', body = null) {
+      // 1. If running natively inside Google Apps Script iframe
+      if (isGoogleAppsScript()) {
+        return new Promise((resolve, reject) => {
+          if (endpoint.startsWith('/api/data')) {
+            const date = new URLSearchParams(endpoint.split('?')[1] || '').get('date') || appState.activeLabel;
+            google.script.run
+              .withSuccessHandler(res => resolve(res))
+              .withFailureHandler(err => reject(err))
+              .getAppData(date);
+          } else if (endpoint === '/api/record/add') {
+            google.script.run
+              .withSuccessHandler(res => resolve(res))
+              .withFailureHandler(err => reject(err))
+              .addDispatchRecord(body.record, body.targetDate);
+          } else if (endpoint === '/api/record/update') {
+            google.script.run
+              .withSuccessHandler(res => resolve(res))
+              .withFailureHandler(err => reject(err))
+              .updateDispatchRecord(body.rowNumber, body.record, body.targetDate);
+          } else if (endpoint === '/api/record/delete') {
+            google.script.run
+              .withSuccessHandler(res => resolve(res))
+              .withFailureHandler(err => reject(err))
+              .deleteDispatchRecord(body.rowNumber, body.targetDate);
+          } else if (endpoint === '/api/record/batch') {
+            google.script.run
+              .withSuccessHandler(res => resolve(res))
+              .withFailureHandler(err => reject(err))
+              .batchAddDispatchRecords(body.records, body.targetDate);
+          } else if (endpoint === '/api/report/email' || endpoint === '/api/report/generate') {
+            google.script.run
+              .withSuccessHandler(res => resolve(res))
+              .withFailureHandler(err => reject(err))
+              .generateEveningReport(body.targetDate, body.recipients);
+          } else if (endpoint === '/api/settings/remark/add') {
+            google.script.run
+              .withSuccessHandler(res => resolve({ success: true, remarks: res }))
+              .withFailureHandler(err => reject(err))
+              .addRemarkOption(body.remark);
+          } else {
+            reject(new Error("Unsupported native operation: " + endpoint));
+          }
+        });
+      }
+
+      // 2. Vercel Cloud & Apps Script Webhook API
+      let url = appState.scriptUrl;
+      const isVercel = window.location.hostname.includes('vercel.app');
+
+      if (!url && !isVercel) {
+        throw new Error("Google Apps Script URL is not configured. Click 'Connect Google Sheet' in the header to enter your deployed Web App URL.");
+      }
+
+      let fetchUrl = url;
+      let headers = {};
+
+      if (isVercel && !url) {
+        fetchUrl = '/api/proxy';
+      } else if (isVercel && url) {
+        fetchUrl = '/api/proxy';
+        headers['x-script-url'] = url;
+      }
+
+      let fetchOptions = {
+        method: method,
+        redirect: 'follow',
+        headers: headers
+      };
+
+      if (method === 'GET') {
+        const dateParam = new URLSearchParams(endpoint.split('?')[1] || '').get('date') || appState.activeLabel;
+        const separator = fetchUrl.includes('?') ? '&' : '?';
+        fetchUrl += `${separator}action=getData&targetDate=${encodeURIComponent(dateParam)}`;
+        if (fetchUrl.startsWith('/api/proxy') && url) {
+          fetchUrl += `&scriptUrl=${encodeURIComponent(url)}`;
+        }
+      } else {
+        // POST
+        let postAction = "addRecord";
+        if (endpoint === '/api/record/update') postAction = "updateRecord";
+        if (endpoint === '/api/record/delete') postAction = "deleteRecord";
+        if (endpoint === '/api/record/batch') postAction = "batchAdd";
+        if (endpoint === '/api/report/email' || endpoint === '/api/report/generate') postAction = "generateReport";
+        if (endpoint === '/api/settings/remark/add') postAction = "addRemark";
+
+        const payload = { action: postAction, ...body };
+        fetchOptions.headers['Content-Type'] = 'text/plain;charset=utf-8';
+        fetchOptions.body = JSON.stringify(payload);
+      }
+
+      const res = await fetch(fetchUrl, fetchOptions);
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}: ${errText || res.statusText}`);
+      }
+      return await res.json();
+    }
+
+    // Core Data Loading
+    async function loadActiveSheetData(silent = false) {
+      if (!silent) showLoader('Reading Dispatches...');
+      try {
+        const res = await apiRequest(`/api/data?date=${appState.activeLabel}`);
+        handleDataLoaded(res);
+      } catch (err) {
+        console.error("Load error:", err);
+        showToast("Connection notice: " + err.message, "error");
+      } finally {
+        hideLoader();
+      }
+    }
+
+    function handleDataLoaded(res) {
+      if (!res) return;
+      appState.activeLabel = res.label || appState.activeLabel;
+      appState.todayLabel = res.todayLabel || '';
+      appState.isToday = Boolean(res.isToday);
+      appState.records = res.records || [];
+      appState.remarksOptions = res.remarksOptions || [];
+      appState.availableDates = res.availableDates || [];
+      appState.facilities = res.facilities || [];
+      appState.configs = res.configs || {};
+
+      // If backend has salesEmails, store them
+      if (res.configs && res.configs.salesEmails && res.configs.salesEmails.length) {
+        appState.reportEmails = res.configs.salesEmails.join(', ');
+        document.getElementById('report-email-recipients').value = appState.reportEmails;
+      }
+
+      // Sync Date Picker
+      appState.activeDateStr = parseLabelToInputDate(appState.activeLabel);
+      document.getElementById('datePicker').value = appState.activeDateStr;
+
+      // Update State Badge
+      const badge = document.getElementById('sheet-status-badge');
+      if (appState.isToday) {
+        badge.className = 'sheet-state-badge live';
+        badge.innerHTML = '<span class="pulse-dot"></span> Today\'s Live Sheet';
+      } else {
+        badge.className = 'sheet-state-badge history';
+        badge.innerHTML = '<i class="bi bi-clock-history"></i> Historical: ' + appState.activeLabel;
+      }
+
+      // KPI Counts
+      const stats = res.stats || {};
+      document.getElementById('stat-total').innerText = stats.total || 0;
+      document.getElementById('stat-dispatched').innerText = stats.dispatched || 0;
+      document.getElementById('stat-pending').innerText = stats.pending || 0;
+      document.getElementById('stat-tomorrow').innerText = stats.toDispatchTomorrow || 0;
+      document.getElementById('stat-capacity').innerText = `${stats.availableSlots || 0} / 100`;
+
+      // Filter Counts
+      document.getElementById('count-all').innerText = stats.total || 0;
+      document.getElementById('count-dispatched').innerText = stats.dispatched || 0;
+      document.getElementById('count-pending').innerText = stats.pending || 0;
+      document.getElementById('count-tomorrow').innerText = stats.toDispatchTomorrow || 0;
+
+      // Populate Dropdowns
+      populateRemarksSelect(appState.remarksOptions);
+      populatePastSheetsSelect(appState.availableDates, appState.activeLabel);
+      populateFacilitySuggestions(appState.facilities);
+
+      // Render Table
+      applyFilterAndRender();
+    }
+
+    function populateRemarksSelect(options) {
+      const select = document.getElementById('form-remarks');
+      const current = select.value;
+      select.innerHTML = '<option value="">-- Select Remark --</option>';
+      options.forEach(opt => {
+        select.innerHTML += `<option value="${opt}">${opt}</option>`;
+      });
+      if (current) select.value = current;
+
+      // Render in Remarks Manager Modal
+      const chips = document.getElementById('remarks-chips-container');
+      if (chips) {
+        chips.innerHTML = '';
+        options.forEach(opt => {
+          chips.innerHTML += `<span class="remark-tag"><i class="bi bi-tag text-primary"></i> ${opt}</span>`;
+        });
+      }
+    }
+
+    function populatePastSheetsSelect(dates, currentLabel) {
+      const select = document.getElementById('pastSheetsSelect');
+      select.innerHTML = `<option value="">📂 Historical Sheets (${dates.length})...</option>`;
+      dates.forEach(d => {
+        const isSel = (d === currentLabel) ? 'selected' : '';
+        const todaySuffix = (d === appState.todayLabel) ? ' (Today)' : '';
+        select.innerHTML += `<option value="${d}" ${isSel}>${d}${todaySuffix}</option>`;
+      });
+    }
+
+    function populateFacilitySuggestions(facilities) {
+      const dl = document.getElementById('facility-suggestions');
+      dl.innerHTML = '';
+      facilities.forEach(f => {
+        dl.innerHTML += `<option value="${f}"></option>`;
+      });
+    }
+
+    // Table Filtering & Rendering
+    function applyStatusFilter(filterType, element) {
+      appState.activeFilter = filterType;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      element.classList.add('active');
+      applyFilterAndRender();
+    }
+
+    function handleSearch(query) {
+      appState.searchQuery = (query || '').toLowerCase().trim();
+      applyFilterAndRender();
+    }
+
+    function applyFilterAndRender() {
+      let filtered = appState.records;
+
+      if (appState.activeFilter !== 'ALL') {
+        filtered = filtered.filter(r => r.status === appState.activeFilter);
+      }
+
+      if (appState.searchQuery) {
+        filtered = filtered.filter(r =>
+          (r.orderNo && r.orderNo.toLowerCase().includes(appState.searchQuery)) ||
+          (r.customer && r.customer.toLowerCase().includes(appState.searchQuery)) ||
+          (r.remarks && r.remarks.toLowerCase().includes(appState.searchQuery))
+        );
+      }
+
+      appState.filteredRecords = filtered;
+      renderOrdersTable(filtered);
+    }
+
+    function renderOrdersTable(records) {
+      const tbody = document.getElementById('orders-tbody');
+      const emptyState = document.getElementById('empty-state');
+
+      if (!records || records.length === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      let html = '';
+      records.forEach((r, idx) => {
+        html += `
+          <tr>
+            <td style="color:var(--muted-foreground); font-family:var(--font-mono); font-size:0.75rem;">${idx + 1}</td>
+            <td><span class="order-code-badge">${escapeHtml(r.orderNo)}</span></td>
+            <td><span class="customer-title">${escapeHtml(r.customer)}</span></td>
+            <td>
+              <span class="status-pill ${r.status}" onclick="cycleOrderStatus(${r.row}, '${r.status}')" title="Click to toggle status">
+                <i class="bi bi-circle-fill" style="font-size:0.45rem;"></i> ${escapeHtml(r.status)}
+              </span>
+            </td>
+            <td>
+              ${r.remarks ? `<span class="remark-tag"><i class="bi bi-truck text-muted me-1"></i> ${escapeHtml(r.remarks)}</span>` : '<span style="color:#CBD5E1;">—</span>'}
+            </td>
+            <td style="text-align: right;">
+              <div class="row-actions">
+                <button class="action-btn" onclick="openEditOrderModal(${r.row})" title="Edit order">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="action-btn del" onclick="confirmDeleteOrder(${r.row}, '${escapeJs(r.orderNo)}')" title="Delete order">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    // 1-Click Status Cycling
+    async function cycleOrderStatus(rowNum, currentStatus) {
+      const cycle = {
+        "Dispatched": "Pending",
+        "Pending": "To Be Dispatched Tomorrow",
+        "To Be Dispatched Tomorrow": "Dispatched"
+      };
+      const next = cycle[currentStatus] || "Dispatched";
+      const record = appState.records.find(r => r.row === rowNum);
+      if (!record) return;
+
+      showLoader(`Setting to ${next}...`);
+      try {
+        const res = await apiRequest('/api/record/update', 'POST', {
+          targetDate: appState.activeLabel,
+          rowNumber: rowNum,
+          record: {
+            orderNo: record.orderNo,
+            customer: record.customer,
+            status: next,
+            remarks: record.remarks
+          }
+        });
+        handleDataLoaded(res);
+        showToast(`Order ${record.orderNo} updated to ${next}`, 'success');
+      } catch (err) {
+        showToast("Update failed: " + err.message, "error");
+      } finally {
+        hideLoader();
+      }
+    }
+
+    // Date Navigation
+    function changeDateOffset(offset) {
+      const current = new Date(appState.activeDateStr);
+      current.setDate(current.getDate() + offset);
+      appState.activeDateStr = formatDateToInput(current);
+      appState.activeLabel = formatDateToLabel(appState.activeDateStr);
+      document.getElementById('datePicker').value = appState.activeDateStr;
+      loadActiveSheetData();
+    }
+
+    function jumpToToday() {
+      initDate();
+      loadActiveSheetData();
+    }
+
+    function onDateChanged(val) {
+      if (!val) return;
+      appState.activeDateStr = val;
+      appState.activeLabel = formatDateToLabel(val);
+      loadActiveSheetData();
+    }
+
+    function onHistoricalSheetPicked(label) {
+      if (!label) return;
+      appState.activeLabel = label;
+      appState.activeDateStr = parseLabelToInputDate(label);
+      document.getElementById('datePicker').value = appState.activeDateStr;
+      loadActiveSheetData();
+    }
+
+    function reloadCurrentData() {
+      loadActiveSheetData();
+    }
+
+    // Modals
+    function openModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.add('active');
+      if (id === 'modal-report-hub') prepareReportHubView();
+      if (id === 'modal-import-hub') {
+        document.getElementById('import-target-date').innerText = appState.activeLabel;
+      }
+    }
+
+    function closeModal(id) {
+      const m = document.getElementById(id);
+      if (m) m.classList.remove('active');
+    }
+
+    function openAddOrderModal() {
+      document.getElementById('modal-order-heading').innerHTML = '<i class="bi bi-plus-circle text-primary"></i> Add Dispatch Order';
+      document.getElementById('edit-row-number').value = '';
+      document.getElementById('form-order-no').value = '';
+      document.getElementById('form-customer').value = '';
+      document.getElementById('form-status').value = 'Dispatched';
+      document.getElementById('form-remarks').value = '';
+      openModal('modal-order-editor');
+      setTimeout(() => document.getElementById('form-order-no').focus(), 80);
+    }
+
+    function openEditOrderModal(rowNum) {
+      const r = appState.records.find(item => item.row === rowNum);
+      if (!r) return;
+      document.getElementById('modal-order-heading').innerHTML = '<i class="bi bi-pencil-square text-primary"></i> Edit Dispatch Order';
+      document.getElementById('edit-row-number').value = r.row;
+      document.getElementById('form-order-no').value = r.orderNo;
+      document.getElementById('form-customer').value = r.customer;
+      document.getElementById('form-status').value = r.status;
+      document.getElementById('form-remarks').value = r.remarks;
+      openModal('modal-order-editor');
+    }
+
+    async function handleOrderSubmit(e) {
+      e.preventDefault();
+      const rowNum = document.getElementById('edit-row-number').value;
+      const orderNo = document.getElementById('form-order-no').value.trim();
+      const customer = document.getElementById('form-customer').value.trim();
+      const status = document.getElementById('form-status').value;
+      const remarks = document.getElementById('form-remarks').value;
+
+      if (!orderNo || !customer) {
+        showToast("Please enter Order No and Customer", "error");
+        return;
+      }
+
+      closeModal('modal-order-editor');
+      showLoader(rowNum ? 'Updating Order...' : 'Adding Order...');
+
+      try {
+        let res;
+        if (rowNum) {
+          res = await apiRequest('/api/record/update', 'POST', {
+            targetDate: appState.activeLabel,
+            rowNumber: rowNum,
+            record: { orderNo, customer, status, remarks }
+          });
+          showToast(`Order ${orderNo} updated!`, 'success');
+        } else {
+          res = await apiRequest('/api/record/add', 'POST', {
+            targetDate: appState.activeLabel,
+            record: { orderNo, customer, status, remarks }
+          });
+          showToast(`Order ${orderNo} added to sheet!`, 'success');
+        }
+        handleDataLoaded(res);
+      } catch (err) {
+        showToast("Failed to save: " + err.message, "error");
+      } finally {
+        hideLoader();
+      }
+    }
+
+    async function confirmDeleteOrder(rowNum, orderNo) {
+      if (!confirm(`Are you sure you want to remove order "${orderNo}" from ${appState.activeLabel}?`)) {
+        return;
+      }
+      showLoader('Removing Order...');
+      try {
+        const res = await apiRequest('/api/record/delete', 'POST', {
+          targetDate: appState.activeLabel,
+          rowNumber: rowNum
+        });
+        handleDataLoaded(res);
+        showToast(`Order ${orderNo} removed`, 'success');
+      } catch (err) {
+        showToast("Failed to remove order: " + err.message, "error");
+      } finally {
+        hideLoader();
+      }
+    }
+
+    // Report Hub, PDF Generation & Emailing
+    function prepareReportHubView() {
+      document.getElementById('report-hub-date').innerText = `Daily Dispatch Report — ${appState.activeLabel}`;
+      document.getElementById('report-hub-summary').innerText = `${appState.records.length} orders recorded for this operational shift`;
+
+      // Render stats grid
+      const statsGrid = document.getElementById('report-hub-stats-grid');
+      if (statsGrid) {
+        statsGrid.innerHTML = `
+          <div style="background:#0F172A; color:#FFFFFF; border-radius:var(--radius-sm); padding:8px 10px; text-align:center;">
+            <div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; opacity:0.8;">Total</div>
+            <div style="font-size:1.15rem; font-weight:800; font-family:var(--font-mono); margin-top:2px;">${appState.records.length}</div>
+          </div>
+          <div style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; border-radius:var(--radius-sm); padding:8px 10px; text-align:center;">
+            <div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">Dispatched</div>
+            <div style="font-size:1.15rem; font-weight:800; font-family:var(--font-mono); color:#0052FF; margin-top:2px;">${appState.stats.dispatched}</div>
+          </div>
+          <div style="background:#FEF3C7; border:1px solid #FDE68A; color:#B45309; border-radius:var(--radius-sm); padding:8px 10px; text-align:center;">
+            <div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">Pending</div>
+            <div style="font-size:1.15rem; font-weight:800; font-family:var(--font-mono); margin-top:2px;">${appState.stats.pending}</div>
+          </div>
+          <div style="background:#F5F3FF; border:1px solid #DDD6FE; color:#6D28D9; border-radius:var(--radius-sm); padding:8px 10px; text-align:center;">
+            <div style="font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em;">Tomorrow</div>
+            <div style="font-size:1.15rem; font-weight:800; font-family:var(--font-mono); margin-top:2px;">${appState.stats.toDispatchTomorrow}</div>
+          </div>
+        `;
+      }
+
+      // Populate saved emails if input is empty
+      const emailField = document.getElementById('report-email-recipients');
+      if (emailField && !emailField.value.trim()) {
+        const saved = localStorage.getItem('biocare_report_emails') || 'biocarehealthsystems@gmail.com, alexandremuithya@gmail.com';
+        emailField.value = saved;
+      }
+
+      const tally = {};
+      appState.records.forEach(r => {
+        const key = r.remarks || '(Not Specified)';
+        tally[key] = (tally[key] || 0) + 1;
+      });
+
+      const container = document.getElementById('report-remarks-tally');
+      container.innerHTML = '';
+      const sortedKeys = Object.keys(tally).sort((a, b) => tally[b] - tally[a]);
+
+      if (sortedKeys.length === 0) {
+        container.innerHTML = '<div style="color:var(--muted-foreground); font-size:0.8rem;">No dispatches recorded.</div>';
+      } else {
+        sortedKeys.forEach(k => {
+          container.innerHTML += `
+            <div style="display:inline-flex; align-items:center; gap:6px; background:#F8FAFC; border:1px solid var(--border); padding:5px 12px; border-radius:var(--radius-sm); font-size:0.82rem;">
+              <span style="font-weight:600; color:var(--foreground);">${escapeHtml(k)}</span>
+              <span style="background:rgba(0, 82, 255, 0.1); color:var(--accent); font-family:var(--font-mono); font-weight:700; padding:1px 6px; border-radius:var(--radius-pill); font-size:0.72rem;">${tally[k]}</span>
+            </div>
+          `;
+        });
+      }
+    }
+
+    async function executeEmailReport() {
+      const emailInput = document.getElementById('report-email-recipients').value.trim();
+      if (!emailInput) {
+        showToast("Please enter at least one recipient email.", "error");
+        return;
+      }
+
+      appState.reportEmails = emailInput;
+      localStorage.setItem('biocare_report_emails', emailInput);
+
+      const btn = document.getElementById('btn-email-pdf');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Compiling PDF &amp; Sending...';
+
+      showLoader('Generating PDF & Sending Email...');
+      try {
+        const recipientsArray = emailInput.split(',').map(e => e.trim()).filter(Boolean);
+        const res = await apiRequest('/api/report/email', 'POST', {
+          targetDate: appState.activeLabel,
+          recipients: recipientsArray
+        });
+
+        if (res && res.success !== false) {
+          const sentTo = res.recipients ? res.recipients.join(', ') : emailInput;
+          showToast(`PDF Report compiled & emailed to: ${sentTo}!`, 'success');
+          closeModal('modal-report-hub');
+        } else {
+          showToast("Report generated with notice: " + (res.emailNotice || 'Please verify in Google Sheets'), 'warning');
+        }
+      } catch (err) {
+        showToast("Emailing failed: " + err.message, "error");
+      } finally {
+        hideLoader();
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+
+    function openRestyledPdfPreview() {
+      const label = appState.activeLabel;
+      const records = appState.records;
+      const stats = appState.stats;
+
+      const remarksTally = {};
+      records.forEach(r => {
+        const key = r.remarks || 'Unspecified';
+        remarksTally[key] = (remarksTally[key] || 0) + 1;
+      });
+
+      const remarksKeys = Object.keys(remarksTally);
+      const totalRemarks = remarksKeys.reduce((acc, k) => acc + remarksTally[k], 0);
+
+      const completionPct = stats.total > 0 ? Math.round((stats.dispatched / stats.total) * 100) : 0;
+      const pendingPct = stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0;
+      const tomorrowPct = stats.total > 0 ? Math.round((stats.toDispatchTomorrow / stats.total) * 100) : 0;
+
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+      const courierBadges = remarksKeys.map(k => {
+        const count = remarksTally[k];
+        const pct = totalRemarks > 0 ? Math.round((count / totalRemarks) * 100) : 0;
+        return `
+          <div style="display:inline-block; margin: 3px 6px 3px 0; background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 4px 10px; font-size: 10px; color: #1E293B;">
+            <span style="font-weight: 700; color: #0052FF;">${escapeHtml(k)}</span>
+            <span style="background: #EFF6FF; color: #0052FF; font-weight: 700; padding: 1px 6px; border-radius: 9999px; margin-left: 4px; font-size: 9px;">${count}</span>
+            <span style="color: #94A3B8; font-size: 8.5px; margin-left: 2px;">(${pct}%)</span>
+          </div>
+        `;
+      }).join('');
+
+      const orderRows = records.map((r, idx) => {
+        const status = String(r.status || 'Dispatched').trim();
+        let badgeClass = 'badge-dispatched';
+        let badgeIcon = '✓';
+        let badgeText = 'DISPATCHED';
+
+        if (status === 'Pending') {
+          badgeClass = 'badge-pending';
+          badgeIcon = '⏳';
+          badgeText = 'PENDING';
+        } else if (status === 'To Be Dispatched Tomorrow') {
+          badgeClass = 'badge-tomorrow';
+          badgeIcon = '➔';
+          badgeText = 'TOMORROW';
+        }
+
+        const rowBg = idx % 2 === 1 ? '#F8FAFC' : '#FFFFFF';
+
+        return `
+          <tr style="background: ${rowBg};">
+            <td style="width: 32px; text-align: center; color: #64748B; font-weight: 600; font-size: 9.5px; padding: 7px 6px; border-bottom: 1px solid #E2E8F0;">${idx + 1}</td>
+            <td style="width: 140px; font-family: monospace; font-weight: 700; color: #0052FF; font-size: 10.5px; padding: 7px 8px; border-bottom: 1px solid #E2E8F0; letter-spacing: 0.02em;">${escapeHtml(r.orderNo)}</td>
+            <td style="padding: 7px 8px; font-size: 10px; color: #0F172A; font-weight: 600; border-bottom: 1px solid #E2E8F0;">${escapeHtml(r.customer)}</td>
+            <td style="width: 125px; text-align: center; padding: 7px 6px; border-bottom: 1px solid #E2E8F0;">
+              <span class="status-badge ${badgeClass}">${badgeIcon} ${badgeText}</span>
+            </td>
+            <td style="width: 155px; padding: 7px 8px; font-size: 9.5px; color: #475569; border-bottom: 1px solid #E2E8F0;">${escapeHtml(r.remarks || '—')}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const reportHtml = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<title>Daily Dispatch Report — ${escapeHtml(label)}</title>
+<style>
+  @page { size: A4 portrait; margin: 10mm 12mm 12mm 12mm; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0F172A; background: #FFFFFF; font-size: 10px; line-height: 1.35; max-width: 900px; margin: 0 auto; padding: 20px; }
+  .header-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  .brand-logo-img { height: 42px; max-width: 280px; object-fit: contain; display: block; }
+  .header-tagline { font-size: 9.5px; color: #64748B; font-weight: 500; margin-top: 4px; letter-spacing: 0.02em; }
+  .meta-badge { display: inline-block; background: #0F172A; color: #FFFFFF; padding: 4px 10px; border-radius: 9999px; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .meta-date { font-family: monospace; font-size: 13px; font-weight: 800; color: #0052FF; }
+  .meta-info-sub { font-size: 8.5px; color: #94A3B8; margin-top: 1px; }
+  .accent-bar { height: 3px; background: linear-gradient(90deg, #0052FF 0%, #4D7CFF 40%, #0F172A 100%); border-radius: 3px; margin: 8px 0 12px 0; }
+  .kpi-table { width: 100%; border-collapse: separate; border-spacing: 6px; margin-bottom: 12px; }
+  .kpi-cell { border-radius: 8px; padding: 8px 10px; vertical-align: top; width: 25%; }
+  .kpi-total { background: #0F172A; color: #FFFFFF; }
+  .kpi-dispatched { background: #EFF6FF; border: 1px solid #BFDBFE; color: #1D4ED8; }
+  .kpi-pending { background: #FEF3C7; border: 1px solid #FDE68A; color: #B45309; }
+  .kpi-tomorrow { background: #F5F3FF; border: 1px solid #DDD6FE; color: #6D28D9; }
+  .kpi-label { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.9; margin-bottom: 2px; }
+  .kpi-val { font-size: 20px; font-weight: 800; line-height: 1.1; }
+  .kpi-sub { font-size: 8px; margin-top: 2px; opacity: 0.85; font-weight: 500; }
+  .progress-wrap { width: 100%; background: #E2E8F0; height: 6px; border-radius: 9999px; overflow: hidden; margin: 2px 0 12px 0; display: flex; }
+  .prog-disp { background: #0052FF; height: 100%; }
+  .prog-pend { background: #F59E0B; height: 100%; }
+  .prog-tomm { background: #8B5CF6; height: 100%; }
+  .section-title { font-size: 10.5px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .courier-panel { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px 10px; margin-bottom: 12px; }
+  .orders-table { width: 100%; border-collapse: collapse; margin-top: 4px; border-radius: 6px; overflow: hidden; }
+  .orders-table th { background: #0F172A; color: #FFFFFF; font-weight: 700; font-size: 8.5px; text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 8px; text-align: left; }
+  .status-badge { display: inline-block; padding: 3px 8px; border-radius: 9999px; font-size: 8.5px; font-weight: 700; letter-spacing: 0.04em; white-space: nowrap; }
+  .badge-dispatched { background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; }
+  .badge-pending { background: #FEF3C7; color: #B45309; border: 1px solid #FCD34D; }
+  .badge-tomorrow { background: #EDE9FE; color: #6D28D9; border: 1px solid #C4B5FD; }
+  .audit-table { width: 100%; border-collapse: separate; border-spacing: 12px 0; margin-top: 18px; page-break-inside: avoid; }
+  .audit-box { border: 1px solid #E2E8F0; border-radius: 6px; padding: 8px 12px; background: #F8FAFC; vertical-align: top; width: 50%; }
+  .audit-role { font-size: 8.5px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 22px; }
+  .audit-line { border-bottom: 1px dashed #94A3B8; margin-bottom: 4px; }
+  .doc-footer { margin-top: 14px; padding-top: 8px; border-top: 1px solid #E2E8F0; text-align: center; font-size: 8px; color: #94A3B8; page-break-inside: avoid; }
+  @media print {
+    body { padding: 0; max-width: 100%; }
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="no-print" style="margin-bottom: 16px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="font-size: 12px; color: #1D4ED8; font-weight: 600;">
+      Print Manifest or Save as PDF using your browser's Print dialog.
+    </div>
+    <button onclick="window.print()" style="background: #0052FF; color: #FFFFFF; border: none; border-radius: 6px; padding: 6px 14px; font-weight: 700; font-size: 12px; cursor: pointer;">
+      Print / Save as PDF
+    </button>
+  </div>
+  <table class="header-table">
+    <tr>
+      <td style="width:55%; vertical-align:middle;">
+        <img src="images/biocare-logo.png" alt="Biocare Health Systems Ltd." class="brand-logo-img" onerror="this.src='images/biocare%20logo.png';" />
+        <div class="header-tagline">Biocare Health Systems Ltd. • Daily Operational Dispatch Manifest</div>
+      </td>
+      <td style="width:45%; vertical-align:middle; text-align:right;">
+        <div class="meta-badge">OFFICIAL DISPATCH MANIFEST</div>
+        <div class="meta-date">${escapeHtml(label)}</div>
+        <div class="meta-info-sub">Generated: ${dateStr} at ${timeStr}</div>
+        <div class="meta-info-sub">Manifest ID: #BHS-DISP-${escapeHtml(label.replace(/-/g, ''))}</div>
+      </td>
+    </tr>
+  </table>
+  <div class="accent-bar"></div>
+  <table class="kpi-table">
+    <tr>
+      <td class="kpi-cell kpi-total">
+        <div class="kpi-label">Total Logged</div>
+        <div class="kpi-val">${stats.total}</div>
+        <div class="kpi-sub">Total Consignments Logged</div>
+      </td>
+      <td class="kpi-cell kpi-dispatched">
+        <div class="kpi-label">Dispatched</div>
+        <div class="kpi-val" style="color:#0052FF;">${stats.dispatched}</div>
+        <div class="kpi-sub">${completionPct}% completed delivery</div>
+      </td>
+      <td class="kpi-cell kpi-pending">
+        <div class="kpi-label">Pending</div>
+        <div class="kpi-val">${stats.pending}</div>
+        <div class="kpi-sub">${pendingPct}% processing hold</div>
+      </td>
+      <td class="kpi-cell kpi-tomorrow">
+        <div class="kpi-label">For Tomorrow</div>
+        <div class="kpi-val">${stats.toDispatchTomorrow}</div>
+        <div class="kpi-sub">${tomorrowPct}% scheduled next cycle</div>
+      </td>
+    </tr>
+  </table>
+  <div class="progress-wrap">
+    <div class="prog-disp" style="width: ${completionPct}%;"></div>
+    <div class="prog-pend" style="width: ${pendingPct}%;"></div>
+    <div class="prog-tomm" style="width: ${tomorrowPct}%;"></div>
+  </div>
+  <div class="section-title">Delivery Courier &amp; Distribution Breakdown</div>
+  <div class="courier-panel">${courierBadges || '<span style="color:#94A3B8; font-size:9px;">No courier remarks logged for this shift.</span>'}</div>
+  <div class="section-title">Itemized Dispatch Records (${records.length} items)</div>
+  <table class="orders-table">
+    <thead><tr><th style="width:32px; text-align:center;">#</th><th style="width:140px;">Order Reference</th><th>Customer / Facility / Client</th><th style="width:125px; text-align:center;">Status</th><th style="width:155px;">Courier / Remarks</th></tr></thead>
+    <tbody>${orderRows || '<tr><td colspan="5" style="text-align:center; padding:16px; color:#94A3B8;">No records logged for this date.</td></tr>'}</tbody>
+  </table>
+  <table class="audit-table">
+    <tr>
+      <td class="audit-box"><div class="audit-role">Prepared By — Dispatch Operations</div><div class="audit-line"></div><div style="font-size:8px; color:#94A3B8; display:flex; justify-content:space-between;"><span>Officer Signature</span><span>Date: ________________</span></div></td>
+      <td class="audit-box"><div class="audit-role">Verified By — Warehouse Logistics Lead</div><div class="audit-line"></div><div style="font-size:8px; color:#94A3B8; display:flex; justify-content:space-between;"><span>Manager Signature</span><span>Date: ________________</span></div></td>
+    </tr>
+  </table>
+  <div class="doc-footer"><strong>Biocare Health Systems Ltd.</strong> — Confidential Operational Logistics Record.<br>System Verified • Biocare Cloud Dispatch Tracker</div>
+</body></html>`;
+
+      const printWin = window.open('', '_blank');
+      if (printWin) {
+        printWin.document.open();
+        printWin.document.write(reportHtml);
+        printWin.document.close();
+        printWin.focus();
+      } else {
+        let iframe = document.getElementById('report-print-iframe');
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.id = 'report-print-iframe';
+          iframe.style.position = 'fixed';
+          iframe.style.right = '0';
+          iframe.style.bottom = '0';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.style.border = '0';
+          document.body.appendChild(iframe);
+        }
+        iframe.contentWindow.document.open();
+        iframe.contentWindow.document.write(reportHtml);
+        iframe.contentWindow.document.close();
+        setTimeout(() => {
+          iframe.contentWindow.focus();
+          iframe.contentWindow.print();
+        }, 400);
+      }
+    }
+
+    // Excel & Clipboard Batch Importer
+    function handleExcelUpload(file) {
+      if (!file) return;
+      showLoader('Parsing Excel spreadsheet...');
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+          parseAndPreviewOrders(jsonRows);
+        } catch (err) {
+          showToast('Failed to parse Excel file: ' + err.message, 'error');
+        } finally {
+          hideLoader();
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    function handlePastedTableData(text) {
+      if (!text || !text.trim()) return;
+      const lines = text.trim().split(/\r?\n/);
+      const rawRows = lines.map(line => {
+        if (line.includes('\t')) return line.split('\t');
+        if (line.includes(',')) return line.split(',');
+        return [line];
+      });
+      parseAndPreviewOrders(rawRows);
+    }
+
+    function parseAndPreviewOrders(rawRows) {
+      if (!rawRows || !rawRows.length) return;
+      const parsed = [];
+      let orderCol = -1;
+      let custCol = -1;
+
+      // Detect header row
+      let startIdx = 0;
+      for (let i = 0; i < Math.min(rawRows.length, 5); i++) {
+        const row = rawRows[i].map(c => String(c).trim().toLowerCase());
+        const oIdx = row.findIndex(c => c.includes('order') || c.includes('ref') || c === 'so' || c.includes('invoice'));
+        const cIdx = row.findIndex(c => c.includes('customer') || c.includes('facility') || c.includes('client') || c.includes('name'));
+        if (oIdx !== -1 && cIdx !== -1) {
+          orderCol = oIdx;
+          custCol = cIdx;
+          startIdx = i + 1;
+          break;
+        }
+      }
+
+      if (orderCol === -1 || custCol === -1) {
+        orderCol = 0;
+        custCol = 1;
+      }
+
+      for (let i = startIdx; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (!row || !row.length) continue;
+        const val0 = String(row[orderCol] || '').trim();
+        const val1 = String(row[custCol] || '').trim();
+
+        // Skip section header lines (e.g. "22 Sep 2026 (13)")
+        if (!val1 && /\(\d+\)/.test(val0)) continue;
+        if (!val0 && !val1) continue;
+
+        if (val0 && val1) {
+          parsed.push({
+            orderNo: val0,
+            customer: val1,
+            status: 'Dispatched',
+            remarks: ''
+          });
+        }
+      }
+
+      appState.parsedUploads = parsed;
+      renderImportPreview(parsed);
+    }
+
+    function renderImportPreview(orders) {
+      const container = document.getElementById('import-preview-container');
+      const tbody = document.getElementById('preview-tbody');
+      const countEl = document.getElementById('preview-total-count');
+      const valEl = document.getElementById('capacity-validation-text');
+      const btn = document.getElementById('btn-submit-import');
+
+      if (!orders || !orders.length) {
+        container.style.display = 'none';
+        btn.disabled = true;
+        return;
+      }
+
+      container.style.display = 'block';
+      countEl.innerText = orders.length;
+
+      const available = 100 - appState.records.length;
+      if (orders.length > available) {
+        valEl.innerHTML = `<span style="color:#DC2626;"><i class="bi bi-exclamation-triangle"></i> Exceeds capacity (${orders.length} orders vs ${available} slots left)</span>`;
+        btn.disabled = true;
+      } else {
+        valEl.innerHTML = `<span style="color:#059669;"><i class="bi bi-check-circle"></i> Fits capacity (${available} slots left)</span>`;
+        btn.disabled = false;
+      }
+
+      let html = '';
+      orders.slice(0, 50).forEach(o => {
+        html += `
+          <tr>
+            <td><strong style="color:var(--accent); font-family:var(--font-mono);">${escapeHtml(o.orderNo)}</strong></td>
+            <td>${escapeHtml(o.customer)}</td>
+            <td><span class="status-pill Dispatched">${o.status}</span></td>
+            <td>${o.remarks || '<span style="color:#CBD5E1;">—</span>'}</td>
+          </tr>
+        `;
+      });
+      if (orders.length > 50) {
+        html += `<tr><td colspan="4" style="text-align:center; color:var(--muted-foreground);">...and ${orders.length - 50} more orders</td></tr>`;
+      }
+      tbody.innerHTML = html;
+    }
+
+    async function executeBatchImport() {
+      if (!appState.parsedUploads || !appState.parsedUploads.length) return;
+      closeModal('modal-import-hub');
+      showLoader(`Batch inserting ${appState.parsedUploads.length} orders...`);
+
+      try {
+        const res = await apiRequest('/api/record/batch', 'POST', {
+          targetDate: appState.activeLabel,
+          records: appState.parsedUploads
+        });
+        handleDataLoaded(res);
+        showToast(`Successfully imported ${appState.parsedUploads.length} orders to ${appState.activeLabel}!`, 'success');
+        appState.parsedUploads = [];
+      } catch (err) {
+        showToast("Batch import failed: " + err.message, "error");
+      } finally {
+        hideLoader();
+      }
+    }
+
+    // Remarks Manager
+    async function addNewRemarkOption() {
+      const input = document.getElementById('new-remark-input');
+      const val = input.value.trim();
+      if (!val) return;
+      showLoader('Adding Remark option...');
+      try {
+        const res = await apiRequest('/api/settings/remark/add', 'POST', { remark: val });
+        input.value = '';
+        if (res && res.remarks) {
+          appState.remarksOptions = res.remarks;
+          populateRemarksSelect(res.remarks);
+        }
+        showToast(`Added remark: "${val}"`, 'success');
+      } catch (err) {
+        showToast("Failed to add remark: " + err.message, "error");
+      } finally {
+        hideLoader();
+      }
+    }
+
+    // Cloud Connection Settings
+    function saveCloudConnection() {
+      const url = document.getElementById('cfg-script-url').value.trim();
+      appState.scriptUrl = url;
+      localStorage.setItem('biocare_script_url', url);
+      closeModal('modal-cloud-connection');
+      updateConnectionPill();
+      showToast("Google Sheet Cloud Webhook URL saved! Connecting...", "success");
+      loadActiveSheetData();
+    }
+
+    async function testCloudConnection() {
+      showLoader('Testing cloud webhook ping...');
+      try {
+        const res = await apiRequest(`/api/data?date=${appState.activeLabel}`);
+        if (res && res.success !== false) {
+          showToast(`Cloud connected! Found ${res.availableDates ? res.availableDates.length : 0} daily sheets.`, 'success');
+        } else {
+          showToast("Connected with notice", "warning");
+        }
+      } catch (err) {
+        showToast("Connection ping failed: " + err.message, "error");
+      } finally {
+        hideLoader();
+      }
+    }
+
+    // Helpers
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeJs(str) {
+      if (!str) return '';
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+  </script>
+</body>
+</html>
