@@ -447,11 +447,8 @@ def api_add_remark():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route('/api/export/pdf', methods=['GET'])
-def api_export_pdf():
-    target_date = normalize_date_label(request.args.get('date'))
+def build_pdf_report(target_date):
     data = get_sheet_data(target_date)
-    
-    # Generate PDF in memory with ReportLab
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=36, rightMargin=36, topMargin=36, bottomMargin=36)
     elements = []
@@ -542,35 +539,46 @@ def api_export_pdf():
         ]))
         elements.append(t_orders)
         
-    elements.append(Spacer(1, 16))
+    elements.append(Spacer(1, 14))
+
+    # Audit & Digital Signatures Box (Alex Mulwa & Wycliffe Adamba)
+    today_formatted = datetime.date.today().strftime('%d-%m-%Y')
+    sig_data = [
+        [
+            Paragraph("<b>PREPARED BY — DISPATCH OPERATIONS</b><br/>"
+                      "<i><u>Alex Mulwa</u></i> (Officer Signature)<br/>"
+                      f"<font size=7 color=gray>Date: {today_formatted} • Digitally Certified</font>", styles['Normal']),
+            Paragraph("<b>VERIFIED BY — WAREHOUSE LOGISTICS LEAD</b><br/>"
+                      "<u>Wycliffe Adamba</u> (Lead Signature)<br/>"
+                      f"<font size=7 color=gray>Shift Date: {target_date} • Warehouse Verification</font>", styles['Normal'])
+        ]
+    ]
+    t_sig = Table(sig_data, colWidths=[265, 265])
+    t_sig.setStyle(TableStyle([
+        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#CBD5E1')),
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F8FAFC')),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 10),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+    ]))
+    elements.append(t_sig)
+    elements.append(Spacer(1, 10))
     elements.append(Paragraph(f"Generated automatically on {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} — Biocare Health Systems Ltd.", meta_style))
     
     doc.build(elements)
     buffer.seek(0)
-    
-    # Also log to Reports_Log in Excel
-    try:
-        wb = load_workbook_safe()
-        log_sheet = wb[REPORTS_LOG_SHEET] if REPORTS_LOG_SHEET in wb.sheetnames else wb.create_sheet(REPORTS_LOG_SHEET)
-        tally_str = ", ".join([f"{k}: {v}" for k, v in remarks_tally.items()])
-        log_sheet.append([
-            target_date,
-            data['stats']['total'],
-            data['stats']['dispatched'],
-            data['stats']['pending'],
-            data['stats']['toDispatchTomorrow'],
-            tally_str,
-            "Local PDF Export",
-            datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        ])
-        wb.save(EXCEL_FILE)
-    except Exception as log_err:
-        print(f"Notice: logging report to Reports_Log: {log_err}")
-        
+    filename = f"Biocare_Dispatch_Report_{target_date}.pdf"
+    return buffer, filename
+
+@app.route('/api/export/pdf', methods=['GET'])
+def api_export_pdf():
+    target_date = normalize_date_label(request.args.get('date'))
+    buffer, filename = build_pdf_report(target_date)
     return send_file(
         buffer,
         as_attachment=True,
-        download_name=f"Biocare_Dispatch_Report_{target_date}.pdf",
+        download_name=filename,
         mimetype='application/pdf'
     )
 
@@ -585,39 +593,53 @@ def api_email_report():
         
     data = get_sheet_data(target_date)
     sender = os.environ.get('SMTP_USER', payload.get('sender', 'muithyaalex2@gmail.com'))
-    smtp_pass = os.environ.get('SMTP_PASS') or os.environ.get('GMAIL_APP_PASSWORD')
+    smtp_pass = payload.get('smtpPass') or payload.get('appPassword') or os.environ.get('SMTP_PASS') or os.environ.get('GMAIL_APP_PASSWORD')
     smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
     smtp_port = int(os.environ.get('SMTP_PORT', 587))
     
+    # Save app password to .env if provided in request
+    if (payload.get('smtpPass') or payload.get('appPassword')) and not os.environ.get('GMAIL_APP_PASSWORD'):
+        try:
+            pwd_to_save = (payload.get('smtpPass') or payload.get('appPassword')).strip()
+            with open('.env', 'a', encoding='utf-8') as ef:
+                ef.write(f"\nGMAIL_APP_PASSWORD={pwd_to_save}\n")
+            os.environ['GMAIL_APP_PASSWORD'] = pwd_to_save
+        except Exception as e:
+            print(f"Notice: saving password to .env: {e}")
+
     sent_successfully = False
     send_error = None
 
-    # Automated background SMTP dispatch if credentials exist
+    # Automated background SMTP dispatch with attached PDF file
     if smtp_pass:
         try:
             import smtplib
             import ssl
             from email.mime.multipart import MIMEMultipart
             from email.mime.text import MIMEText
+            from email.mime.application import MIMEApplication
             
-            subject = payload.get('subject') or f"Biocare Daily Dispatch Report — {target_date}"
-            html_body = payload.get('htmlContent') or f"<h3>Biocare Daily Dispatch Report — {target_date}</h3>"
-            text_body = payload.get('plainText') or f"Biocare Daily Dispatch Report — {target_date}"
+            subject = f"Daily Dispatch Report — {target_date}"
+            text_body = "Daily Dispatch Report."
             
-            msg = MIMEMultipart('alternative')
+            msg = MIMEMultipart()
             msg['Subject'] = subject
             msg['From'] = f"Biocare Dispatch Operations <{sender}>"
             msg['To'] = ", ".join(recipients)
             
-            part1 = MIMEText(text_body, 'plain')
-            part2 = MIMEText(html_body, 'html')
-            msg.attach(part1)
-            msg.attach(part2)
+            # Message is strictly "Daily Dispatch Report."
+            msg.attach(MIMEText(text_body, 'plain'))
+            
+            # Attach the actual PDF document
+            pdf_buffer, pdf_filename = build_pdf_report(target_date)
+            pdf_part = MIMEApplication(pdf_buffer.getvalue(), _subtype="pdf")
+            pdf_part.add_header('Content-Disposition', 'attachment', filename=pdf_filename)
+            msg.attach(pdf_part)
             
             context = ssl.create_default_context()
             with smtplib.SMTP(smtp_host, smtp_port) as server:
                 server.starttls(context=context)
-                server.login(sender, smtp_pass)
+                server.login(sender, smtp_pass.replace(" ", ""))
                 server.sendmail(sender, recipients, msg.as_string())
             sent_successfully = True
         except Exception as e:
@@ -640,7 +662,7 @@ def api_email_report():
             data['stats']['pending'],
             data['stats']['toDispatchTomorrow'],
             tally_str,
-            ("Automated Sent: " if sent_successfully else "Emailed Manifest: ") + ", ".join(recipients),
+            ("PDF Attached & Emailed: " if sent_successfully else "Emailed Manifest: ") + ", ".join(recipients),
             datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         ])
         wb.save(EXCEL_FILE)
@@ -650,12 +672,13 @@ def api_email_report():
     return jsonify({
         "success": True,
         "sent": sent_successfully,
+        "requiresAuth": not bool(smtp_pass),
         "status": "Success",
         "label": target_date,
         "recipients": recipients,
         "sender": sender,
         "error": send_error,
-        "emailNotice": f"Report manifest dispatched to: {', '.join(recipients)}",
+        "emailNotice": f"Daily Dispatch Report (PDF attached) dispatched to: {', '.join(recipients)}",
         "stats": data['stats']
     })
 
