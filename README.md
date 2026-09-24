@@ -10,8 +10,10 @@ A cloud-based real-time dispatch management system built for **Biocare Health Sy
 - **Minimalist Modern Design System**: Built with an executive aesthetic featuring Electric Blue gradient accents (`#0052FF` → `#4D7CFF`), Slate-900 contrast, and dual-font typography pairing Calistoga, Inter, and JetBrains Mono.
 - **Supabase PostgreSQL Cloud Backend**: Direct, low-latency database connectivity with sub-100ms response times, atomic CRUD operations, and full multi-user concurrency across mobile and desktop.
 - **Biocare Brand Integration**: Authentic high-resolution Biocare Health Systems Ltd. logo embedded for web view and generated dispatch manifests.
-- **Automated Executive PDF Reports**: One-click generation of publication-grade PDF shift manifests with KPI metrics, delivery distribution ratio bars, courier breakdown chips, itemized status badges, and official warehouse sign-off lines.
-- **Shift Email Summary**: Automatically prepares formatted operational dispatch reports for team leaders (`biocarehealthsystems@gmail.com, alexandremuithya@gmail.com`).
+- **Automated Direct Background Email Dispatch (Zero mailto:)**: Client-side background delivery via EmailJS and server SMTP relay. Sends shift reports directly from `muithyaalex2@gmail.com` to `alexandremuithya@gmail.com` and `biocarehealthsystems@gmail.com` without opening any desktop email clients.
+- **Executive PDF Manifests with Simulated Digital Signatures**: One-click generation of publication-grade PDF shift manifests with KPI metrics, delivery distribution ratio bars, courier breakdown chips, itemized status badges, and official simulated digital signatures:
+  - **Prepared By (Dispatch Operations)**: Alex Mulwa (*italicized & strikethrough*, stamped with the dynamic current date).
+  - **Verified By (Warehouse Logistics Lead)**: Wycliffe Adamba (*strikethrough*, stamped with the active shift's operational date).
 - **Batch Order Importer**: Supports drag-and-drop Excel files (`.xlsx`), ERP spreadsheets, or direct clipboard copy-paste with automatic order deduplication and slot validation.
 - **100% Turnkey Cloud Deployment**: Fully deployable to Vercel or GitHub Pages in under two minutes with zero server configuration.
 

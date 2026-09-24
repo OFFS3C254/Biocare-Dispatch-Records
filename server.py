@@ -577,13 +577,52 @@ def api_export_pdf():
 @app.route('/api/report/email', methods=['POST'])
 @app.route('/api/report/generate', methods=['POST'])
 def api_email_report():
-    payload = request.get_json(force=True)
+    payload = request.get_json(force=True) or {}
     target_date = normalize_date_label(payload.get('targetDate') or payload.get('date'))
-    recipients = payload.get('recipients') or ["biocarehealthsystems@gmail.com", "alexandremuithya@gmail.com"]
+    recipients = payload.get('recipients') or ["alexandremuithya@gmail.com", "biocarehealthsystems@gmail.com"]
     if isinstance(recipients, str):
         recipients = [e.strip() for e in recipients.split(',') if e.strip()]
         
     data = get_sheet_data(target_date)
+    sender = os.environ.get('SMTP_USER', payload.get('sender', 'muithyaalex2@gmail.com'))
+    smtp_pass = os.environ.get('SMTP_PASS') or os.environ.get('GMAIL_APP_PASSWORD')
+    smtp_host = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
+    smtp_port = int(os.environ.get('SMTP_PORT', 587))
+    
+    sent_successfully = False
+    send_error = None
+
+    # Automated background SMTP dispatch if credentials exist
+    if smtp_pass:
+        try:
+            import smtplib
+            import ssl
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText
+            
+            subject = payload.get('subject') or f"Biocare Daily Dispatch Report — {target_date}"
+            html_body = payload.get('htmlContent') or f"<h3>Biocare Daily Dispatch Report — {target_date}</h3>"
+            text_body = payload.get('plainText') or f"Biocare Daily Dispatch Report — {target_date}"
+            
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = f"Biocare Dispatch Operations <{sender}>"
+            msg['To'] = ", ".join(recipients)
+            
+            part1 = MIMEText(text_body, 'plain')
+            part2 = MIMEText(html_body, 'html')
+            msg.attach(part1)
+            msg.attach(part2)
+            
+            context = ssl.create_default_context()
+            with smtplib.SMTP(smtp_host, smtp_port) as server:
+                server.starttls(context=context)
+                server.login(sender, smtp_pass)
+                server.sendmail(sender, recipients, msg.as_string())
+            sent_successfully = True
+        except Exception as e:
+            send_error = str(e)
+            print(f"SMTP Automated send notice: {e}")
     
     # Log report event to Reports_Log
     try:
@@ -601,7 +640,7 @@ def api_email_report():
             data['stats']['pending'],
             data['stats']['toDispatchTomorrow'],
             tally_str,
-            "Emailed PDF: " + ", ".join(recipients),
+            ("Automated Sent: " if sent_successfully else "Emailed Manifest: ") + ", ".join(recipients),
             datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         ])
         wb.save(EXCEL_FILE)
@@ -610,10 +649,13 @@ def api_email_report():
         
     return jsonify({
         "success": True,
+        "sent": sent_successfully,
         "status": "Success",
         "label": target_date,
         "recipients": recipients,
-        "emailNotice": f"PDF generated and dispatched to: {', '.join(recipients)}",
+        "sender": sender,
+        "error": send_error,
+        "emailNotice": f"Report manifest dispatched to: {', '.join(recipients)}",
         "stats": data['stats']
     })
 

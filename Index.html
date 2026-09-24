@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Biocare Health Systems — Daily Dispatch Portal</title>
 
-  <!-- Google Fonts: Dual-Font System (Calistoga + Inter + JetBrains Mono) -->
+  <!-- Google Fonts: Dual-Font System (Calistoga + Inter + JetBrains Mono + Dancing Script) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Calistoga&family=Dancing+Script:wght@700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Bootstrap Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -18,6 +18,9 @@
 
   <!-- Supabase Client v2 for Cloud PostgreSQL Backend -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- EmailJS Browser SDK v4 for Automated Direct Email Dispatch (Zero mailto:) -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
     /* ======================================================================
@@ -1499,29 +1502,46 @@
           </div>
         </div>
 
-        <!-- Automated Email PDF Section -->
+        <!-- Automated Background Email Dispatch Section -->
         <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:var(--radius-md); padding:18px; display:flex; flex-direction:column; gap:12px;">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:36px; height:36px; border-radius:8px; background:var(--gradient-accent); display:flex; align-items:center; justify-content:center; color:#FFFFFF; font-size:1.1rem;">
-              <i class="bi bi-envelope-fill"></i>
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:36px; height:36px; border-radius:8px; background:var(--gradient-accent); display:flex; align-items:center; justify-content:center; color:#FFFFFF; font-size:1.1rem;">
+                <i class="bi bi-send-check-fill"></i>
+              </div>
+              <div>
+                <div style="font-weight:700; font-size:0.92rem; color:var(--foreground);">Automated Daily Dispatch Manifest Delivery</div>
+                <div style="font-size:0.78rem; color:var(--muted-foreground);">Background automated email directly to leadership (Zero mailto: popups)</div>
+              </div>
             </div>
-            <div>
-              <div style="font-weight:700; font-size:0.92rem; color:var(--foreground);">Dispatch Shift Summary &amp; PDF Report</div>
-              <div style="font-size:0.78rem; color:var(--muted-foreground);">Prepares formatted operational dispatch manifest for leadership &amp; sales team</div>
+            <button type="button" class="btn btn-glass btn-sm" onclick="openEmailSettingsModal()" title="Email Automation Configuration" style="padding:4px 10px; font-size:0.78rem;">
+              <i class="bi bi-sliders"></i> Gateway Settings
+            </button>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr; gap:10px;">
+            <div style="background:#FFFFFF; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; display:flex; justify-content:space-between; align-items:center; font-size:0.8rem;">
+              <span style="color:var(--muted-foreground);"><i class="bi bi-person-circle"></i> Authenticated Sender Account:</span>
+              <span style="font-weight:600; font-family:var(--font-mono); color:var(--foreground);" id="report-sender-display">muithyaalex2@gmail.com</span>
+            </div>
+
+            <div class="input-group" style="margin:0;">
+              <label class="input-label" for="report-email-recipients">Recipient Emails (comma-separated):</label>
+              <input type="text" id="report-email-recipients" class="text-input" placeholder="alexandremuithya@gmail.com, biocarehealthsystems@gmail.com" value="alexandremuithya@gmail.com, biocarehealthsystems@gmail.com">
+              <span style="font-size:0.75rem; color:var(--muted-foreground); margin-top:4px;">
+                Pre-configured default: <code>alexandremuithya@gmail.com, biocarehealthsystems@gmail.com</code>
+              </span>
             </div>
           </div>
 
-          <div class="input-group">
-            <label class="input-label" for="report-email-recipients">Recipient Emails (comma-separated):</label>
-            <input type="text" id="report-email-recipients" class="text-input" placeholder="biocarehealthsystems@gmail.com, alexandremuithya@gmail.com">
-            <span style="font-size:0.75rem; color:var(--muted-foreground); margin-top:4px;">
-              Configured recipient list. Separate multiple emails with commas.
-            </span>
-          </div>
-
-          <button type="button" class="btn btn-primary" id="btn-email-pdf" onclick="executeEmailReport()" style="width:100%; justify-content:center; height:46px;">
-            <i class="bi bi-send-fill"></i> Prepare Summary &amp; Open Mailer
+          <button type="button" class="btn btn-primary" id="btn-email-pdf" onclick="executeEmailReport()" style="width:100%; justify-content:center; height:46px; font-weight:700;">
+            <i class="bi bi-send-check-fill"></i> Dispatch Report via Email (Background)
           </button>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.76rem; color:var(--muted-foreground); padding:0 2px;">
+            <span id="email-gateway-status"><i class="bi bi-check-circle-fill text-success"></i> Direct Silent Dispatch (No desktop mail client needed)</span>
+            <span style="cursor:pointer; color:var(--accent); font-weight:600;" onclick="openEmailSettingsModal()">Configure API Keys &rarr;</span>
+          </div>
         </div>
 
         <!-- PDF Preview & Print Card -->
@@ -1532,7 +1552,7 @@
             </div>
             <div>
               <div style="font-weight:700; font-size:0.88rem; color:var(--foreground);">Preview &amp; Save / Print PDF</div>
-              <div style="font-size:0.76rem; color:var(--muted-foreground);">Open high-fidelity restyled PDF layout for immediate preview or print</div>
+              <div style="font-size:0.76rem; color:var(--muted-foreground);">Open executive manifest with official digital signatures &amp; print layout</div>
             </div>
           </div>
           <button type="button" class="btn btn-outline btn-sm" onclick="openRestyledPdfPreview()">
@@ -1543,6 +1563,72 @@
 
       <div class="modal-actions-bar">
         <button type="button" class="btn btn-outline" onclick="closeModal('modal-report-hub')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Email Gateway & Automation Settings -->
+  <div class="modal-overlay" id="modal-email-settings">
+    <div class="modal-container">
+      <div class="modal-top">
+        <h3><i class="bi bi-envelope-gear-fill text-primary"></i> Email Automation Gateway</h3>
+        <button class="action-btn" onclick="closeModal('modal-email-settings')"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div class="modal-content-body">
+        <p style="font-size:0.86rem; color:var(--muted-foreground);">
+          Configure direct background email delivery. Daily shift reports are sent from <strong style="color:var(--foreground);">muithyaalex2@gmail.com</strong> directly to leadership without opening mailto: or desktop mail clients.
+        </p>
+
+        <div class="input-group">
+          <label class="input-label" for="cfg-sender-email">Sender Account (From)</label>
+          <input type="email" id="cfg-sender-email" class="text-input" value="muithyaalex2@gmail.com">
+        </div>
+
+        <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:12px; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:8px; font-weight:700; color:#1D4ED8; font-size:0.86rem; margin-bottom:4px;">
+            <i class="bi bi-lightning-charge-fill"></i> Client-Side Background Dispatch (EmailJS)
+          </div>
+          <div style="font-size:0.78rem; color:#1E3A8A; line-height:1.4;">
+            EmailJS delivers reports directly from the browser using your connected Gmail account with zero server required. Free tier includes 200 automated reports per month.
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="cfg-emailjs-service">EmailJS Service ID</label>
+          <input type="text" id="cfg-emailjs-service" class="text-input" placeholder="service_biocare" value="service_biocare">
+          <span style="font-size:0.72rem; color:var(--muted-foreground); margin-top:2px;">Service linked to Gmail (muithyaalex2@gmail.com)</span>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="cfg-emailjs-template">EmailJS Template ID</label>
+          <input type="text" id="cfg-emailjs-template" class="text-input" placeholder="template_dispatch" value="template_dispatch">
+          <span style="font-size:0.72rem; color:var(--muted-foreground); margin-top:2px;">Template created in your EmailJS dashboard</span>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="cfg-emailjs-key">EmailJS Public Key (User ID)</label>
+          <input type="text" id="cfg-emailjs-key" class="text-input" placeholder="e.g. u1A2b3C4d5E6f7G8h">
+          <span style="font-size:0.72rem; color:var(--muted-foreground); margin-top:2px;">Found under Account &gt; General &gt; Public Key in EmailJS</span>
+        </div>
+
+        <!-- Setup Instructions Accordion -->
+        <details style="background:#F8FAFC; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; font-size:0.78rem; color:var(--muted-foreground); margin-top:10px;">
+          <summary style="font-weight:600; color:var(--foreground); cursor:pointer;">
+            <i class="bi bi-question-circle"></i> Quick 2-Minute EmailJS Setup Guide
+          </summary>
+          <ol style="margin:8px 0 0 16px; padding:0; line-height:1.5;">
+            <li>Go to <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent); font-weight:600;">emailjs.com</a> and sign up for a free account.</li>
+            <li>In <strong>Email Services</strong>, click <em>Add New Service</em> &rarr; choose <strong>Gmail</strong> &rarr; connect <code>muithyaalex2@gmail.com</code>. Copy the <strong>Service ID</strong>.</li>
+            <li>In <strong>Email Templates</strong>, click <em>Create New Template</em>. Set Subject to: <code>{{subject}}</code> and Content to: <code>{{{html_content}}}</code>. Copy the <strong>Template ID</strong>.</li>
+            <li>In <strong>Account &rarr; General</strong>, copy your <strong>Public Key</strong>.</li>
+            <li>Paste them above and click Save. That's it! Every click sends directly in the background.</li>
+          </ol>
+        </details>
+      </div>
+      <div class="modal-actions-bar">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-email-settings')">Cancel</button>
+        <button type="button" class="btn btn-outline" onclick="testEmailConnection()"><i class="bi bi-send"></i> Test Send</button>
+        <button type="button" class="btn btn-primary" onclick="saveEmailSettings()"><i class="bi bi-check-lg"></i> Save Settings</button>
       </div>
     </div>
   </div>
@@ -1764,7 +1850,13 @@
       configs: {},
       parsedUploads: [],
       stats: { total: 0, dispatched: 0, pending: 0, toDispatchTomorrow: 0, availableSlots: 100 },
-      reportEmails: localStorage.getItem('biocare_report_emails') || 'biocarehealthsystems@gmail.com, alexandremuithya@gmail.com'
+      senderEmail: localStorage.getItem('biocare_sender_email') || 'muithyaalex2@gmail.com',
+      reportEmails: localStorage.getItem('biocare_report_emails') || 'alexandremuithya@gmail.com, biocarehealthsystems@gmail.com',
+      emailjsConfig: {
+        serviceId: localStorage.getItem('biocare_emailjs_service') || 'service_biocare',
+        templateId: localStorage.getItem('biocare_emailjs_template') || 'template_dispatch',
+        publicKey: localStorage.getItem('biocare_emailjs_key') || ''
+      }
     };
 
     // UI Initializer
@@ -1787,9 +1879,12 @@
         });
       }
 
-      // Pre-fill recipient emails
+      // Pre-fill recipient emails & sender display
       const emailField = document.getElementById('report-email-recipients');
       if (emailField) emailField.value = appState.reportEmails;
+      const senderDisplay = document.getElementById('report-sender-display');
+      if (senderDisplay) senderDisplay.innerText = appState.senderEmail;
+      updateEmailGatewayStatus();
 
       // Auto-poll every 30s if viewing today's shift
       setInterval(() => {
@@ -2417,7 +2512,7 @@
       }
     }
 
-    function executeEmailReport() {
+    async function executeEmailReport() {
       const emailInput = document.getElementById('report-email-recipients').value.trim();
       if (!emailInput) {
         showToast("Please enter at least one recipient email.", "error");
@@ -2436,27 +2531,227 @@
         toDispatchTomorrow: records.filter(r => r.status === 'To Be Dispatched Tomorrow').length
       };
 
-      const subject = encodeURIComponent(`Biocare Daily Dispatch Report — ${label}`);
-      let bodyText = `BIOCARE HEALTH SYSTEMS LTD.\n`;
-      bodyText += `DAILY OPERATIONAL DISPATCH MANIFEST — ${label}\n\n`;
-      bodyText += `Shift Performance Summary:\n`;
-      bodyText += `• Total Orders Logged: ${stats.total}\n`;
-      bodyText += `• Successfully Dispatched: ${stats.dispatched} (${stats.total > 0 ? Math.round((stats.dispatched / stats.total) * 100) : 0}%)\n`;
-      bodyText += `• Processing / Pending: ${stats.pending}\n`;
-      bodyText += `• Scheduled Tomorrow: ${stats.toDispatchTomorrow}\n\n`;
-      bodyText += `Itemized Consignments (${records.length}):\n`;
-      records.forEach((r, i) => {
-        bodyText += `${i + 1}. [${r.orderNo}] ${r.customer} — ${r.status}${r.remarks ? ' (' + r.remarks + ')' : ''}\n`;
+      const remarksTally = {};
+      records.forEach(r => {
+        const key = r.remarks || 'Unspecified';
+        remarksTally[key] = (remarksTally[key] || 0) + 1;
       });
-      bodyText += `\nGenerated via Biocare Cloud Dispatch Portal\n`;
 
-      const mailtoUrl = `mailto:${encodeURIComponent(emailInput)}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
-      window.open(mailtoUrl, '_blank');
-      showToast("Email draft prepared! Opening PDF preview...", "success");
+      const completionPct = stats.total > 0 ? Math.round((stats.dispatched / stats.total) * 100) : 0;
+      const recipients = emailInput.split(',').map(e => e.trim()).filter(Boolean);
+      const subject = `Biocare Daily Dispatch Report — ${label} (${stats.dispatched}/${stats.total} Dispatched)`;
 
-      setTimeout(() => {
-        openRestyledPdfPreview();
-      }, 400);
+      const now = new Date();
+      const dayStr = String(now.getDate()).padStart(2, '0');
+      const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+      const todayDateFormatted = `${dayStr}-${monthStr}-${now.getFullYear()}`;
+
+      // Build rich HTML table for email body
+      const emailHtml = generateEmailHtmlReport(label, stats, completionPct, remarksTally, records, todayDateFormatted);
+
+      // Plaintext version for legacy email clients
+      let plainText = `BIOCARE HEALTH SYSTEMS LTD. — DAILY OPERATIONAL DISPATCH MANIFEST\n`;
+      plainText += `Operational Shift Date: ${label}\n\n`;
+      plainText += `Shift Performance Summary:\n`;
+      plainText += `• Total Orders Logged: ${stats.total}\n`;
+      plainText += `• Successfully Dispatched: ${stats.dispatched} (${completionPct}%)\n`;
+      plainText += `• Processing / Pending: ${stats.pending}\n`;
+      plainText += `• Scheduled Tomorrow: ${stats.toDispatchTomorrow}\n\n`;
+      plainText += `Delivery Distribution Breakdown:\n`;
+      Object.keys(remarksTally).forEach(k => {
+        plainText += `• ${k}: ${remarksTally[k]}\n`;
+      });
+      plainText += `\nItemized Consignments (${records.length} items):\n`;
+      records.forEach((r, idx) => {
+        plainText += `${idx + 1}. [${r.orderNo}] ${r.customer} — ${r.status}${r.remarks ? ' (' + r.remarks + ')' : ''}\n`;
+      });
+      plainText += `\nDigitally Certified By:\n`;
+      plainText += `Prepared By: Alex Mulwa (Date: ${todayDateFormatted})\n`;
+      plainText += `Verified By: Wycliffe Adamba (Shift Date: ${label})\n`;
+
+      const serviceId = localStorage.getItem('biocare_emailjs_service') || 'service_biocare';
+      const templateId = localStorage.getItem('biocare_emailjs_template') || 'template_dispatch';
+      const publicKey = localStorage.getItem('biocare_emailjs_key') || '';
+
+      // Mode 1: Automated Client-Side Background Dispatch via EmailJS (Zero mailto:)
+      if (publicKey && typeof emailjs !== 'undefined') {
+        showLoader(`Sending background email to ${recipients.join(', ')}...`);
+        try {
+          emailjs.init({ publicKey });
+          for (const toEmail of recipients) {
+            await emailjs.send(serviceId, templateId, {
+              to_email: toEmail,
+              from_name: 'Biocare Dispatch Operations (muithyaalex2@gmail.com)',
+              sender_email: appState.senderEmail || 'muithyaalex2@gmail.com',
+              reply_to: appState.senderEmail || 'muithyaalex2@gmail.com',
+              subject: subject,
+              shift_date: label,
+              today_date: todayDateFormatted,
+              total_orders: stats.total,
+              dispatched_count: stats.dispatched,
+              pending_count: stats.pending,
+              tomorrow_count: stats.toDispatchTomorrow,
+              completion_rate: `${completionPct}%`,
+              html_content: emailHtml,
+              message: plainText
+            });
+          }
+          hideLoader();
+          showToast(`Report automatically dispatched to ${recipients.join(', ')}!`, 'success');
+
+          // Log event to server if active
+          try {
+            fetch('/api/report/email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ targetDate: label, recipients: recipients })
+            }).catch(() => {});
+          } catch(e) {}
+          return;
+        } catch (err) {
+          hideLoader();
+          showToast(`EmailJS delivery notice: ${err.text || err.message}`, 'error');
+          openEmailSettingsModal();
+          return;
+        }
+      }
+
+      // Mode 2: Local Server SMTP Relay (if server.py is running)
+      try {
+        showLoader(`Dispatching automated email via server gateway...`);
+        const srvResp = await fetch('/api/report/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetDate: label,
+            recipients: recipients,
+            sender: appState.senderEmail || 'muithyaalex2@gmail.com',
+            subject: subject,
+            stats: stats,
+            htmlContent: emailHtml,
+            plainText: plainText
+          })
+        });
+        const srvData = await srvResp.json();
+        hideLoader();
+        if (srvData && srvData.sent) {
+          showToast(`Automated report successfully delivered via server to ${recipients.join(', ')}!`, 'success');
+          return;
+        }
+      } catch (err) {
+        hideLoader();
+      }
+
+      // Mode 3: API Key Setup Required (NEVER redirect to mailto:)
+      showToast("Email automation requires your EmailJS Public Key once to activate background sending without mailto:.", "warning");
+      openEmailSettingsModal();
+    }
+
+    function generateEmailHtmlReport(label, stats, completionPct, remarksTally, records, todayFormatted) {
+      const courierItems = Object.keys(remarksTally).map(k => {
+        return `<span style="display:inline-block; margin:2px 4px; padding:3px 8px; background:#F1F5F9; border-radius:4px; font-size:11px; color:#0F172A;"><strong>${escapeHtml(k)}:</strong> ${remarksTally[k]}</span>`;
+      }).join(' ');
+
+      const orderRows = records.map((r, i) => {
+        const status = r.status || 'Dispatched';
+        let statusStyle = 'background:#DCFCE7; color:#15803D;';
+        if (status === 'Pending') statusStyle = 'background:#FEF3C7; color:#B45309;';
+        else if (status === 'To Be Dispatched Tomorrow') statusStyle = 'background:#EDE9FE; color:#6D28D9;';
+
+        const rowBg = i % 2 === 1 ? '#F8FAFC' : '#FFFFFF';
+        return `
+          <tr style="background:${rowBg}; border-bottom:1px solid #E2E8F0;">
+            <td style="padding:6px 8px; font-size:11px; text-align:center; color:#64748B;">${i + 1}</td>
+            <td style="padding:6px 8px; font-size:11px; font-family:monospace; font-weight:700; color:#0052FF;">${escapeHtml(r.orderNo)}</td>
+            <td style="padding:6px 8px; font-size:11px; font-weight:600; color:#0F172A;">${escapeHtml(r.customer)}</td>
+            <td style="padding:6px 8px; text-align:center;">
+              <span style="display:inline-block; padding:2px 8px; border-radius:12px; font-size:10px; font-weight:700; ${statusStyle}">${escapeHtml(status)}</span>
+            </td>
+            <td style="padding:6px 8px; font-size:11px; color:#475569;">${escapeHtml(r.remarks || '—')}</td>
+          </tr>
+        `;
+      }).join('');
+
+      return `
+        <div style="font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width:680px; margin:0 auto; background:#FFFFFF; border:1px solid #E2E8F0; border-radius:8px; overflow:hidden;">
+          <div style="background:#0F172A; padding:18px 24px; color:#FFFFFF;">
+            <div style="font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#94A3B8; font-weight:700; margin-bottom:4px;">Daily Operational Logistics Report</div>
+            <div style="font-size:20px; font-weight:800; color:#FFFFFF; margin:0;">Biocare Health Systems Ltd.</div>
+            <div style="font-size:12px; color:#38BDF8; font-weight:600; margin-top:2px;">Shift Date: ${escapeHtml(label)}</div>
+          </div>
+
+          <div style="padding:20px 24px;">
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:16px;">
+              <div style="background:#0F172A; color:#FFFFFF; padding:10px; border-radius:6px; text-align:center;">
+                <div style="font-size:9px; text-transform:uppercase; opacity:0.8; font-weight:700;">Total Orders</div>
+                <div style="font-size:18px; font-weight:800; margin-top:2px;">${stats.total}</div>
+              </div>
+              <div style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; padding:10px; border-radius:6px; text-align:center;">
+                <div style="font-size:9px; text-transform:uppercase; font-weight:700;">Dispatched</div>
+                <div style="font-size:18px; font-weight:800; margin-top:2px;">${stats.dispatched} (${completionPct}%)</div>
+              </div>
+              <div style="background:#FEF3C7; border:1px solid #FDE68A; color:#B45309; padding:10px; border-radius:6px; text-align:center;">
+                <div style="font-size:9px; text-transform:uppercase; font-weight:700;">Pending</div>
+                <div style="font-size:18px; font-weight:800; margin-top:2px;">${stats.pending}</div>
+              </div>
+              <div style="background:#F5F3FF; border:1px solid #DDD6FE; color:#6D28D9; padding:10px; border-radius:6px; text-align:center;">
+                <div style="font-size:9px; text-transform:uppercase; font-weight:700;">For Tomorrow</div>
+                <div style="font-size:18px; font-weight:800; margin-top:2px;">${stats.toDispatchTomorrow}</div>
+              </div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#0F172A; margin-bottom:6px;">Distribution &amp; Courier Breakdown</div>
+              <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px;">${courierItems || '<span style="color:#94A3B8; font-size:11px;">No courier remarks logged</span>'}</div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+              <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#0F172A; margin-bottom:6px;">Itemized Consignments (${records.length} items)</div>
+              <table style="width:100%; border-collapse:collapse; border:1px solid #E2E8F0;">
+                <thead>
+                  <tr style="background:#0F172A; color:#FFFFFF;">
+                    <th style="padding:6px 8px; font-size:10px; text-align:center;">#</th>
+                    <th style="padding:6px 8px; font-size:10px; text-align:left;">Reference</th>
+                    <th style="padding:6px 8px; font-size:10px; text-align:left;">Customer</th>
+                    <th style="padding:6px 8px; font-size:10px; text-align:center;">Status</th>
+                    <th style="padding:6px 8px; font-size:10px; text-align:left;">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>${orderRows}</tbody>
+              </table>
+            </div>
+
+            <!-- Signatures in Email -->
+            <table style="width:100%; border-collapse:separate; border-spacing:10px 0; margin-top:16px;">
+              <tr>
+                <td style="width:50%; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:10px 12px; vertical-align:top;">
+                  <div style="font-size:9px; font-weight:700; text-transform:uppercase; color:#64748B; margin-bottom:6px;">Prepared By — Operations</div>
+                  <div style="font-size:14px; font-style:italic; text-decoration:line-through; font-weight:700; color:#0052FF;"><s><em>Alex Mulwa</em></s></div>
+                  <div style="border-bottom:1px dashed #CBD5E1; margin:6px 0;"></div>
+                  <div style="font-size:9px; color:#64748B; display:flex; justify-content:space-between;">
+                    <span>Operations Officer</span>
+                    <span>Date: <strong>${todayFormatted}</strong></span>
+                  </div>
+                </td>
+                <td style="width:50%; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:10px 12px; vertical-align:top;">
+                  <div style="font-size:9px; font-weight:700; text-transform:uppercase; color:#64748B; margin-bottom:6px;">Verified By — Logistics Lead</div>
+                  <div style="font-size:14px; text-decoration:line-through; font-weight:700; color:#0F172A;"><s>Wycliffe Adamba</s></div>
+                  <div style="border-bottom:1px dashed #CBD5E1; margin:6px 0;"></div>
+                  <div style="font-size:9px; color:#64748B; display:flex; justify-content:space-between;">
+                    <span>Warehouse Lead</span>
+                    <span>Shift Date: <strong>${escapeHtml(label)}</strong></span>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="background:#F8FAFC; border-top:1px solid #E2E8F0; padding:12px 24px; text-align:center; font-size:10px; color:#94A3B8;">
+            <strong>Biocare Health Systems Ltd.</strong> • Confidential Logistics Operational Manifest<br>
+            Dispatched via Biocare Cloud Dispatch Tracker
+          </div>
+        </div>
+      `;
     }
 
     function openRestyledPdfPreview() {
@@ -2480,6 +2775,9 @@
       const now = new Date();
       const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
       const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const dayStr = String(now.getDate()).padStart(2, '0');
+      const monthStr = String(now.getMonth() + 1).padStart(2, '0');
+      const todayDateStr = `${dayStr}-${monthStr}-${now.getFullYear()}`;
 
       const courierBadges = remarksKeys.map(k => {
         const count = remarksTally[k];
@@ -2527,6 +2825,9 @@
       const reportHtml = `<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <title>Daily Dispatch Report — ${escapeHtml(label)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
 <style>
   @page { size: A4 portrait; margin: 10mm 12mm 12mm 12mm; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -2632,8 +2933,38 @@
   </table>
   <table class="audit-table">
     <tr>
-      <td class="audit-box"><div class="audit-role">Prepared By — Dispatch Operations</div><div class="audit-line"></div><div style="font-size:8px; color:#94A3B8; display:flex; justify-content:space-between;"><span>Officer Signature</span><span>Date: ________________</span></div></td>
-      <td class="audit-box"><div class="audit-role">Verified By — Warehouse Logistics Lead</div><div class="audit-line"></div><div style="font-size:8px; color:#94A3B8; display:flex; justify-content:space-between;"><span>Manager Signature</span><span>Date: ________________</span></div></td>
+      <td class="audit-box">
+        <div class="audit-role">Prepared By — Dispatch Operations</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; min-height:28px; margin-bottom:2px; padding:0 2px;">
+          <div>
+            <div style="font-family:'Dancing Script', 'Segoe Script', 'Brush Script MT', 'Caveat', cursive, sans-serif; font-size:16px; font-weight:700; color:#0052FF; line-height:1.1;"><s><em>Alex Mulwa</em></s></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:monospace; font-size:10px; font-weight:700; color:#0F172A;">${todayDateStr}</div>
+          </div>
+        </div>
+        <div class="audit-line"></div>
+        <div style="font-size:7.5px; color:#64748B; display:flex; justify-content:space-between;">
+          <span>Officer Signature (Certified)</span>
+          <span>Date Prepared: <strong>${todayDateStr}</strong></span>
+        </div>
+      </td>
+      <td class="audit-box">
+        <div class="audit-role">Verified By — Warehouse Logistics Lead</div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; min-height:28px; margin-bottom:2px; padding:0 2px;">
+          <div>
+            <div style="font-family:'Dancing Script', 'Segoe Script', 'Brush Script MT', 'Caveat', cursive, sans-serif; font-size:16px; font-weight:700; color:#0F172A; line-height:1.1;"><s>Wycliffe Adamba</s></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:monospace; font-size:10px; font-weight:700; color:#0F172A;">${escapeHtml(label)}</div>
+          </div>
+        </div>
+        <div class="audit-line"></div>
+        <div style="font-size:7.5px; color:#64748B; display:flex; justify-content:space-between;">
+          <span>Lead Signature (Verified)</span>
+          <span>Date Verified: <strong>${escapeHtml(label)}</strong></span>
+        </div>
+      </td>
     </tr>
   </table>
   <div class="doc-footer"><strong>Biocare Health Systems Ltd.</strong> — Confidential Operational Logistics Record.<br>System Verified • Biocare Cloud Dispatch Tracker</div>
@@ -2845,6 +3176,79 @@
         showToast("Notice: " + err.message, "info");
       } finally {
         hideLoader();
+      }
+    }
+
+    // Email Automation Gateway Settings
+    function openEmailSettingsModal() {
+      document.getElementById('cfg-sender-email').value = localStorage.getItem('biocare_sender_email') || 'muithyaalex2@gmail.com';
+      document.getElementById('cfg-emailjs-service').value = localStorage.getItem('biocare_emailjs_service') || 'service_biocare';
+      document.getElementById('cfg-emailjs-template').value = localStorage.getItem('biocare_emailjs_template') || 'template_dispatch';
+      document.getElementById('cfg-emailjs-key').value = localStorage.getItem('biocare_emailjs_key') || '';
+      openModal('modal-email-settings');
+    }
+
+    function saveEmailSettings() {
+      const sender = document.getElementById('cfg-sender-email').value.trim() || 'muithyaalex2@gmail.com';
+      const service = document.getElementById('cfg-emailjs-service').value.trim() || 'service_biocare';
+      const template = document.getElementById('cfg-emailjs-template').value.trim() || 'template_dispatch';
+      const key = document.getElementById('cfg-emailjs-key').value.trim();
+
+      localStorage.setItem('biocare_sender_email', sender);
+      localStorage.setItem('biocare_emailjs_service', service);
+      localStorage.setItem('biocare_emailjs_template', template);
+      localStorage.setItem('biocare_emailjs_key', key);
+
+      appState.senderEmail = sender;
+      appState.emailjsConfig = { serviceId: service, templateId: template, publicKey: key };
+
+      const senderDisplay = document.getElementById('report-sender-display');
+      if (senderDisplay) senderDisplay.innerText = sender;
+
+      updateEmailGatewayStatus();
+      closeModal('modal-email-settings');
+      showToast("Email automation gateway settings saved!", "success");
+    }
+
+    function updateEmailGatewayStatus() {
+      const key = localStorage.getItem('biocare_emailjs_key');
+      const statusEl = document.getElementById('email-gateway-status');
+      if (!statusEl) return;
+      if (key) {
+        statusEl.innerHTML = '<i class="bi bi-shield-check text-success"></i> Direct Silent Dispatch Active (EmailJS Connected)';
+      } else {
+        statusEl.innerHTML = '<i class="bi bi-info-circle text-primary"></i> Direct Silent Dispatch (Configure EmailJS Key for Background Send)';
+      }
+    }
+
+    async function testEmailConnection() {
+      const key = document.getElementById('cfg-emailjs-key').value.trim();
+      const service = document.getElementById('cfg-emailjs-service').value.trim();
+      const template = document.getElementById('cfg-emailjs-template').value.trim();
+      const sender = document.getElementById('cfg-sender-email').value.trim();
+      const recipients = (document.getElementById('report-email-recipients')?.value || 'alexandremuithya@gmail.com').split(',')[0].trim();
+
+      if (!key) {
+        showToast("Please enter your EmailJS Public Key to test connection.", "warning");
+        return;
+      }
+
+      showLoader('Testing EmailJS background delivery...');
+      try {
+        emailjs.init({ publicKey: key });
+        await emailjs.send(service, template, {
+          to_email: recipients,
+          from_name: 'Biocare Test Gateway (' + sender + ')',
+          sender_email: sender,
+          subject: 'Biocare Email Gateway Test — Direct Background Dispatch',
+          message: 'This is a test notification confirming that background automated email dispatch is operational with zero mailto: redirects.',
+          shift_date: appState.activeLabel || 'Test'
+        });
+        hideLoader();
+        showToast(`Test email dispatched successfully to ${recipients}!`, 'success');
+      } catch (err) {
+        hideLoader();
+        showToast(`EmailJS test notice: ${err.text || err.message}`, 'error');
       }
     }
 
