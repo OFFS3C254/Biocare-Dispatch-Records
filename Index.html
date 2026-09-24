@@ -940,8 +940,240 @@
       animation: spin 0.75s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    /* Quick Courier Chip Buttons */
+    .quick-chip-btn {
+      background: #F1F5F9;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      padding: 4px 10px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--foreground);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .quick-chip-btn:hover {
+      background: rgba(0, 82, 255, 0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .quick-chip-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Tablet & Medium Screens (<= 1024px) */
+    @media (max-width: 1024px) {
+      .main-canvas {
+        padding: 24px 18px;
+        gap: 20px;
+      }
+      .metrics-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* Mobile & Small Tablets (<= 768px) */
+    @media (max-width: 768px) {
+      .hero-container {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+      }
+      .brand-group {
+        justify-content: flex-start;
+      }
+      .brand-title {
+        font-size: 1.35rem;
+      }
+      .brand-logo-img {
+        height: 38px;
+      }
+      .hero-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        width: 100%;
+      }
+      .conn-pill {
+        grid-column: 1 / -1;
+        justify-content: center;
+        width: 100%;
+        padding: 8px 12px;
+      }
+      .btn-primary {
+        grid-column: 1 / -1;
+        height: 46px;
+        font-size: 0.95rem;
+        justify-content: center;
+      }
+      .hero-actions .btn-glass {
+        padding: 8px 10px;
+        font-size: 0.8rem;
+        justify-content: center;
+      }
+
+      .main-canvas {
+        padding: 16px 12px;
+        gap: 16px;
+      }
+
+      /* Navigator Bar */
+      .navigator-bar {
+        padding: 14px 12px;
+        gap: 12px;
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .nav-left-group {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .date-picker-wrap {
+        flex: 1;
+        min-width: 130px;
+        padding: 6px 8px;
+      }
+      .date-input-field {
+        font-size: 0.88rem;
+        width: 100%;
+      }
+      .sheet-state-badge {
+        width: 100%;
+        justify-content: center;
+        margin-top: 4px;
+      }
+      .sheet-dropdown {
+        max-width: 100%;
+        width: 100%;
+        flex: 1;
+      }
+
+      /* Metrics Grid */
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .metric-card {
+        padding: 14px 14px;
+        gap: 12px;
+        border-radius: var(--radius-md);
+      }
+      .metric-icon-box {
+        width: 38px;
+        height: 38px;
+        font-size: 1.15rem;
+      }
+      .metric-label {
+        font-size: 0.72rem;
+      }
+      .metric-num {
+        font-size: 1.45rem;
+      }
+      .metric-card:last-child {
+        grid-column: 1 / -1;
+      }
+
+      /* Toolbar & Filter Tabs */
+      .surface-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 14px 12px;
+      }
+      .filter-group {
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 6px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .filter-group::-webkit-scrollbar {
+        display: none;
+      }
+      .filter-btn {
+        flex-shrink: 0;
+        padding: 6px 13px;
+        font-size: 0.8rem;
+      }
+      .search-wrap {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      /* Table and Modals */
+      .orders-table th, .orders-table td {
+        padding: 10px 10px;
+        font-size: 0.82rem;
+      }
+      .customer-title {
+        max-width: 180px;
+      }
+      .action-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
+      }
+      .modal-container {
+        max-width: 95vw !important;
+        width: 95vw !important;
+        max-height: 92vh;
+        margin: 10px auto;
+        border-radius: var(--radius-md);
+        padding: 0;
+      }
+      .modal-top {
+        padding: 14px 16px;
+      }
+      .modal-content-body {
+        padding: 14px 16px;
+        max-height: 70vh;
+        overflow-y: auto;
+      }
+      .modal-actions-bar {
+        padding: 12px 16px;
+      }
+      .text-input {
+        font-size: 16px !important; /* Prevents auto-zoom on mobile iOS */
+      }
+    }
+
+    /* Small Mobile Phones (<= 480px) */
+    @media (max-width: 480px) {
+      .brand-title {
+        font-size: 1.15rem;
+      }
+      .brand-subtitle {
+        font-size: 0.68rem;
+      }
+      .brand-logo-img {
+        height: 32px;
+      }
+      .nav-left-group {
+        gap: 4px;
+      }
+      .nav-left-group .btn-sm {
+        padding: 6px 8px;
+        font-size: 0.75rem;
+      }
+      .metrics-grid {
+        gap: 8px;
+      }
+      .metric-card {
+        padding: 10px 12px;
+        gap: 10px;
+      }
+      .metric-num {
+        font-size: 1.3rem;
+      }
+      .orders-table th:nth-child(1), .orders-table td:nth-child(1) {
+        display: none; /* Hide row index on tiny screens to save room */
+      }
     }
 
     /* Print Stylesheet */
@@ -1217,9 +1449,12 @@
 
           <div class="input-group">
             <label class="input-label" for="form-remarks">Courier / Delivery Remarks</label>
-            <select id="form-remarks" class="text-input">
-              <option value="">-- Select Remark --</option>
-            </select>
+            <input type="text" id="form-remarks" class="text-input" list="remarks-datalist" placeholder="Type to search or enter delivery mode..." autocomplete="off">
+            <datalist id="remarks-datalist"></datalist>
+            <div style="font-size:0.75rem; color:var(--muted-foreground); margin-top:6px; font-weight:600;">
+              <i class="bi bi-lightning-charge-fill text-primary"></i> Quick Pick:
+            </div>
+            <div class="quick-chips-wrapper" id="quick-remarks-chips" style="display:flex; flex-wrap:wrap; gap:5px; margin-top:4px;"></div>
           </div>
         </div>
         <div class="modal-actions-bar">
@@ -1473,17 +1708,56 @@
       activeFilter: 'ALL',
       searchQuery: '',
       remarksOptions: [
-        "Fargo",
+        "Airstrip Eastleigh",
+        "Banya Mulenge",
         "Bolt",
-        "Naekana",
-        "Customer Picked From Office",
+        "Bus Car",
+        "Cool Limited",
         "Courier Service Used",
+        "Customer Picked From Office",
+        "Customer never came to pick",
+        "Delivered By Amos",
+        "Delivered by Alex",
         "Delivered by Biocare (Lorry)",
-        "Delivered by Mutindi",
+        "Delivered by Charity",
         "Delivered by Jacinta",
+        "Delivered by Joan",
+        "Delivered by Langat",
+        "Delivered by Mulei",
+        "Delivered by Munuve",
+        "Delivered by Mutindi",
+        "Delivered by Ndeti",
+        "Delivered by Ndeti & Nick",
+        "Delivered by Tabby",
+        "Delivered by Wakhanu",
+        "Delivered by Wycliffe",
+        "Delivered by kimani",
+        "Delivered by nick",
+        "Delivered by wambua",
+        "Dream Cruiser",
+        "Dreamline Bus",
         "Eastleigh (Wambua)",
+        "Fargo",
+        "G-Couch",
+        "G4S",
+        "KUKENA SACCO",
+        "Kina Sacco",
+        "Kinatwa",
+        "LIBAN BUS",
+        "Landline Matatu",
+        "Logistics Challenges",
+        "Luxury Shuttle",
+        "NENO Sacco",
+        "Naekana",
+        "Narok Line",
+        "North Rift",
+        "Sent by Adamba",
+        "Sent by Wambua",
+        "Super Metro",
+        "Supreme Coach",
         "Waiting Arrival of Goods",
-        "Logistics Challenges"
+        "Waiting Payment",
+        "Waiting payment update"
       ],
       availableDates: [],
       facilities: [],
@@ -1708,12 +1982,22 @@
           .select('value')
           .eq('category', 'remark');
 
+        // Also query distinct remarks from dispatches table
+        const { data: dispatchRemarks } = await client
+          .from('dispatches')
+          .select('remarks')
+          .order('id', { ascending: false })
+          .limit(500);
+
+        const remSet = new Set(appState.remarksOptions);
         if (remarkRows && remarkRows.length) {
-          const remSet = new Set(appState.remarksOptions);
-          remarkRows.forEach(r => { if (r.value) remSet.add(r.value); });
-          appState.remarksOptions = Array.from(remSet);
-          populateRemarksSelect(appState.remarksOptions);
+          remarkRows.forEach(r => { if (r.value && r.value.trim()) remSet.add(r.value.trim()); });
         }
+        if (dispatchRemarks && dispatchRemarks.length) {
+          dispatchRemarks.forEach(r => { if (r.remarks && r.remarks.trim()) remSet.add(r.remarks.trim()); });
+        }
+        appState.remarksOptions = Array.from(remSet).sort();
+        populateRemarksSelect(appState.remarksOptions);
       } catch (e) {
         console.warn("Metadata notice:", e);
       }
@@ -1764,7 +2048,7 @@
       document.getElementById('count-pending').innerText = stats.pending || 0;
       document.getElementById('count-tomorrow').innerText = stats.toDispatchTomorrow || 0;
 
-      // Populate Dropdowns
+      // Populate Dropdowns & Datalists
       populateRemarksSelect(appState.remarksOptions);
       populatePastSheetsSelect(appState.availableDates, appState.activeLabel);
       populateFacilitySuggestions(appState.facilities);
@@ -1774,20 +2058,34 @@
     }
 
     function populateRemarksSelect(options) {
-      const select = document.getElementById('form-remarks');
-      const current = select.value;
-      select.innerHTML = '<option value="">-- Select Remark --</option>';
-      options.forEach(opt => {
-        select.innerHTML += `<option value="${opt}">${opt}</option>`;
-      });
-      if (current) select.value = current;
+      const datalist = document.getElementById('remarks-datalist');
+      if (datalist) {
+        datalist.innerHTML = '';
+        options.forEach(opt => {
+          datalist.innerHTML += `<option value="${escapeHtml(opt)}"></option>`;
+        });
+      }
+
+      // Quick Chips for rapid 1-tap mobile selection
+      const quickBar = document.getElementById('quick-remarks-chips');
+      if (quickBar) {
+        const topCouriers = [
+          "Fargo", "Bolt", "Customer Picked From Office", "Naekana",
+          "Delivered by Mutindi", "Delivered by Alex", "Eastleigh (Wambua)",
+          "Dreamline Bus", "Courier Service Used", "Waiting Arrival of Goods"
+        ];
+        quickBar.innerHTML = '';
+        topCouriers.forEach(c => {
+          quickBar.innerHTML += `<button type="button" class="quick-chip-btn" onclick="document.getElementById('form-remarks').value='${escapeJs(c)}'">${escapeHtml(c)}</button>`;
+        });
+      }
 
       // Render in Remarks Manager Modal
       const chips = document.getElementById('remarks-chips-container');
       if (chips) {
         chips.innerHTML = '';
         options.forEach(opt => {
-          chips.innerHTML += `<span class="remark-tag"><i class="bi bi-tag text-primary"></i> ${opt}</span>`;
+          chips.innerHTML += `<span class="remark-tag"><i class="bi bi-tag text-primary"></i> ${escapeHtml(opt)}</span>`;
         });
       }
     }
