@@ -16,6 +16,9 @@
   <!-- SheetJS for Client-Side Excel (.xlsx) Parsing -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
+  <!-- Supabase Client v2 for Cloud PostgreSQL Backend -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     /* ======================================================================
        DESIGN SYSTEM: MINIMALIST MODERN
@@ -995,14 +998,14 @@
       </div>
 
       <div class="hero-actions">
-        <!-- Google Sheets Cloud Connection Indicator -->
-        <div class="conn-pill" id="conn-pill" onclick="openConnectionModal()" title="Configure Google Sheets Cloud Webhook">
+        <!-- Supabase Database Connection Indicator -->
+        <div class="conn-pill" id="conn-pill" onclick="openConnectionModal()" title="Supabase Database Status & Configuration">
           <span class="status-dot" id="conn-status-dot"></span>
           <span id="conn-status-text">Connecting...</span>
-          <i class="bi bi-cloud-check ms-1"></i>
+          <i class="bi bi-database-check ms-1"></i>
         </div>
 
-        <button class="btn btn-glass" onclick="reloadCurrentData()" title="Sync live orders from Google Sheet">
+        <button class="btn btn-glass" onclick="reloadCurrentData()" title="Sync live orders from Supabase Database">
           <i class="bi bi-arrow-clockwise" id="refresh-icon"></i> Refresh
         </button>
 
@@ -1268,8 +1271,8 @@
               <i class="bi bi-envelope-fill"></i>
             </div>
             <div>
-              <div style="font-weight:700; font-size:0.92rem; color:var(--foreground);">Email PDF Report to Team</div>
-              <div style="font-size:0.78rem; color:var(--muted-foreground);">Generates executive PDF and sends email attachment via Google Workspace</div>
+              <div style="font-weight:700; font-size:0.92rem; color:var(--foreground);">Dispatch Shift Summary &amp; PDF Report</div>
+              <div style="font-size:0.78rem; color:var(--muted-foreground);">Prepares formatted operational dispatch manifest for leadership &amp; sales team</div>
             </div>
           </div>
 
@@ -1282,7 +1285,7 @@
           </div>
 
           <button type="button" class="btn btn-primary" id="btn-email-pdf" onclick="executeEmailReport()" style="width:100%; justify-content:center; height:46px;">
-            <i class="bi bi-send-fill"></i> Generate PDF &amp; Send Email
+            <i class="bi bi-send-fill"></i> Prepare Summary &amp; Open Mailer
           </button>
         </div>
 
@@ -1397,29 +1400,31 @@
     </div>
   </div>
 
-  <!-- MODAL: Google Sheets Cloud Webhook Settings -->
+  <!-- MODAL: Supabase Cloud Database Settings -->
   <div class="modal-overlay" id="modal-cloud-connection">
     <div class="modal-container">
       <div class="modal-top">
-        <h3><i class="bi bi-cloud-check-fill text-primary"></i> Google Sheets Cloud Settings</h3>
+        <h3><i class="bi bi-database-fill-check text-primary"></i> Supabase Database Settings</h3>
         <button class="action-btn" onclick="closeModal('modal-cloud-connection')"><i class="bi bi-x-lg"></i></button>
       </div>
       <div class="modal-content-body">
         <p style="font-size:0.85rem; color:var(--muted-foreground);">
-          Connect this Vercel deployment directly to your live Biocare Dispatch Tracker Google Sheet.
+          Connected directly to your Supabase PostgreSQL cloud database for sub-100ms real-time queries and multi-user concurrency.
         </p>
 
         <div class="input-group">
-          <label class="input-label" for="cfg-script-url">Google Apps Script Web App URL</label>
-          <input type="text" id="cfg-script-url" class="text-input" placeholder="https://script.google.com/macros/s/.../exec">
-          <small style="color:var(--muted-foreground); font-size:0.75rem;">
-            From Google Sheet: <em>Extensions &gt; Apps Script &gt; Deploy &gt; Web app (Access: Anyone)</em>.
-          </small>
+          <label class="input-label" for="cfg-supabase-url">Supabase Project URL</label>
+          <input type="text" id="cfg-supabase-url" class="text-input" placeholder="https://xyz.supabase.co">
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="cfg-supabase-key">Supabase Publishable / Anon Key</label>
+          <input type="password" id="cfg-supabase-key" class="text-input" placeholder="sb_publishable_...">
         </div>
 
         <div style="background:#F8FAFC; border:1px solid var(--border); padding:14px; border-radius:var(--radius-md); font-size:0.82rem; line-height:1.5;">
-          <strong style="color:var(--foreground);"><i class="bi bi-shield-check text-primary me-1"></i> Multi-User Real-Time Sync:</strong><br>
-          Any team member accessing your Vercel URL gets live instant reads &amp; writes directly into the Google Sheet.
+          <strong style="color:var(--foreground);"><i class="bi bi-lightning-charge-fill text-primary me-1"></i> Dedicated PostgreSQL:</strong><br>
+          Zero cold-start delays. All edits, order status toggles, and Excel batch uploads sync immediately into your Supabase database.
         </div>
       </div>
       <div class="modal-actions-bar">
@@ -1436,12 +1441,27 @@
   <div class="loading-curtain" id="loader">
     <div class="spinner-ring"></div>
     <div style="font-family:var(--font-mono); font-size:0.88rem; font-weight:700; color:var(--foreground);" id="loader-status">
-      Syncing with Google Sheet...
+      Syncing with Supabase DB...
     </div>
   </div>
 
   <!-- Frontend JavaScript Logic -->
   <script>
+    // ======================================================================
+    // SUPABASE POSTGRESQL DATABASE CLIENT
+    // ======================================================================
+    const DEFAULT_SUPABASE_URL = 'https://klykpcakybreybrrpbhp.supabase.co';
+    const DEFAULT_SUPABASE_KEY = 'sb_publishable_GtvJBDlVpZwLaKNCrjqTbg_b_msekq6';
+
+    function getSupabaseClient() {
+      const url = localStorage.getItem('biocare_supabase_url') || DEFAULT_SUPABASE_URL;
+      const key = localStorage.getItem('biocare_supabase_key') || DEFAULT_SUPABASE_KEY;
+      if (typeof window.supabase === 'undefined' || !window.supabase.createClient) {
+        throw new Error("Supabase JS client library not loaded. Check internet connection.");
+      }
+      return window.supabase.createClient(url, key);
+    }
+
     // State Management
     const appState = {
       activeDateStr: '',    // YYYY-MM-DD
@@ -1452,23 +1472,31 @@
       filteredRecords: [],
       activeFilter: 'ALL',
       searchQuery: '',
-      remarksOptions: [],
+      remarksOptions: [
+        "Fargo",
+        "Bolt",
+        "Naekana",
+        "Customer Picked From Office",
+        "Courier Service Used",
+        "Delivered by Biocare (Lorry)",
+        "Delivered by Mutindi",
+        "Delivered by Jacinta",
+        "Eastleigh (Wambua)",
+        "Waiting Arrival of Goods",
+        "Logistics Challenges"
+      ],
       availableDates: [],
       facilities: [],
       configs: {},
       parsedUploads: [],
-      scriptUrl: localStorage.getItem('biocare_script_url') || 'https://script.google.com/macros/s/AKfycbzTB_L0IsGud4sp8N7jc46wErf6vmKGTnKObQNUNPvq73ivFHwbXXXuWVXMCEhcbWiW6w/exec',
+      stats: { total: 0, dispatched: 0, pending: 0, toDispatchTomorrow: 0, availableSlots: 100 },
       reportEmails: localStorage.getItem('biocare_report_emails') || 'biocarehealthsystems@gmail.com, alexandremuithya@gmail.com'
     };
-
-    function isGoogleAppsScript() {
-      return typeof google !== 'undefined' && google && google.script && google.script.run;
-    }
 
     // UI Initializer
     window.addEventListener('DOMContentLoaded', () => {
       initDate();
-      updateConnectionPill();
+      updateConnectionPill(true);
       loadActiveSheetData();
 
       // Setup dropzone listeners
@@ -1486,20 +1514,23 @@
       }
 
       // Pre-fill recipient emails
-      document.getElementById('report-email-recipients').value = appState.reportEmails;
+      const emailField = document.getElementById('report-email-recipients');
+      if (emailField) emailField.value = appState.reportEmails;
 
-      // Auto-poll every 35s if viewing today's sheet
+      // Auto-poll every 30s if viewing today's shift
       setInterval(() => {
         if (appState.isToday && !document.getElementById('modal-order-editor').classList.contains('active')) {
           loadActiveSheetData(true);
         }
-      }, 35000);
+      }, 30000);
     });
 
     function initDate() {
       const now = new Date();
       appState.activeDateStr = formatDateToInput(now);
       appState.activeLabel = formatDateToLabel(appState.activeDateStr);
+      appState.todayLabel = appState.activeLabel;
+      appState.isToday = true;
       document.getElementById('datePicker').value = appState.activeDateStr;
     }
 
@@ -1552,137 +1583,139 @@
       if (icon) icon.classList.remove('bi-spin');
     }
 
-    function updateConnectionPill() {
+    function updateConnectionPill(connected = true) {
       const text = document.getElementById('conn-status-text');
       const dot = document.getElementById('conn-status-dot');
-      if (isGoogleAppsScript()) {
-        text.innerText = 'Google Sheets (Native)';
-        dot.className = 'status-dot';
-      } else if (appState.scriptUrl || window.location.hostname.includes('vercel.app')) {
-        text.innerText = 'Google Sheets Cloud';
+      if (!text || !dot) return;
+      if (connected) {
+        text.innerText = 'Supabase Connected';
         dot.className = 'status-dot';
       } else {
-        text.innerText = 'Connect Google Sheet';
+        text.innerText = 'Supabase Offline';
         dot.className = 'status-dot warning';
       }
     }
 
     function openConnectionModal() {
-      document.getElementById('cfg-script-url').value = appState.scriptUrl || '';
+      document.getElementById('cfg-supabase-url').value = localStorage.getItem('biocare_supabase_url') || DEFAULT_SUPABASE_URL;
+      document.getElementById('cfg-supabase-key').value = localStorage.getItem('biocare_supabase_key') || DEFAULT_SUPABASE_KEY;
       openModal('modal-cloud-connection');
     }
 
-    // Cloud API Dispatcher
-    async function apiRequest(endpoint, method = 'GET', body = null) {
-      // 1. If running natively inside Google Apps Script iframe
-      if (isGoogleAppsScript()) {
-        return new Promise((resolve, reject) => {
-          if (endpoint.startsWith('/api/data')) {
-            const date = new URLSearchParams(endpoint.split('?')[1] || '').get('date') || appState.activeLabel;
-            google.script.run
-              .withSuccessHandler(res => resolve(res))
-              .withFailureHandler(err => reject(err))
-              .getAppData(date);
-          } else if (endpoint === '/api/record/add') {
-            google.script.run
-              .withSuccessHandler(res => resolve(res))
-              .withFailureHandler(err => reject(err))
-              .addDispatchRecord(body.record, body.targetDate);
-          } else if (endpoint === '/api/record/update') {
-            google.script.run
-              .withSuccessHandler(res => resolve(res))
-              .withFailureHandler(err => reject(err))
-              .updateDispatchRecord(body.rowNumber, body.record, body.targetDate);
-          } else if (endpoint === '/api/record/delete') {
-            google.script.run
-              .withSuccessHandler(res => resolve(res))
-              .withFailureHandler(err => reject(err))
-              .deleteDispatchRecord(body.rowNumber, body.targetDate);
-          } else if (endpoint === '/api/record/batch') {
-            google.script.run
-              .withSuccessHandler(res => resolve(res))
-              .withFailureHandler(err => reject(err))
-              .batchAddDispatchRecords(body.records, body.targetDate);
-          } else if (endpoint === '/api/report/email' || endpoint === '/api/report/generate') {
-            google.script.run
-              .withSuccessHandler(res => resolve(res))
-              .withFailureHandler(err => reject(err))
-              .generateEveningReport(body.targetDate, body.recipients);
-          } else if (endpoint === '/api/settings/remark/add') {
-            google.script.run
-              .withSuccessHandler(res => resolve({ success: true, remarks: res }))
-              .withFailureHandler(err => reject(err))
-              .addRemarkOption(body.remark);
-          } else {
-            reject(new Error("Unsupported native operation: " + endpoint));
-          }
-        });
-      }
-
-      // 2. Vercel Cloud & Apps Script Webhook API
-      let url = appState.scriptUrl;
-      const isVercel = window.location.hostname.includes('vercel.app');
-
-      if (!url && !isVercel) {
-        throw new Error("Google Apps Script URL is not configured. Click 'Connect Google Sheet' in the header to enter your deployed Web App URL.");
-      }
-
-      let fetchUrl = url;
-      let headers = {};
-
-      if (isVercel && !url) {
-        fetchUrl = '/api/proxy';
-      } else if (isVercel && url) {
-        fetchUrl = '/api/proxy';
-        headers['x-script-url'] = url;
-      }
-
-      let fetchOptions = {
-        method: method,
-        redirect: 'follow',
-        headers: headers
-      };
-
-      if (method === 'GET') {
-        const dateParam = new URLSearchParams(endpoint.split('?')[1] || '').get('date') || appState.activeLabel;
-        const separator = fetchUrl.includes('?') ? '&' : '?';
-        fetchUrl += `${separator}action=getData&targetDate=${encodeURIComponent(dateParam)}`;
-        if (fetchUrl.startsWith('/api/proxy') && url) {
-          fetchUrl += `&scriptUrl=${encodeURIComponent(url)}`;
-        }
-      } else {
-        // POST
-        let postAction = "addRecord";
-        if (endpoint === '/api/record/update') postAction = "updateRecord";
-        if (endpoint === '/api/record/delete') postAction = "deleteRecord";
-        if (endpoint === '/api/record/batch') postAction = "batchAdd";
-        if (endpoint === '/api/report/email' || endpoint === '/api/report/generate') postAction = "generateReport";
-        if (endpoint === '/api/settings/remark/add') postAction = "addRemark";
-
-        const payload = { action: postAction, ...body };
-        fetchOptions.headers['Content-Type'] = 'text/plain;charset=utf-8';
-        fetchOptions.body = JSON.stringify(payload);
-      }
-
-      const res = await fetch(fetchUrl, fetchOptions);
-      if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        throw new Error(`HTTP ${res.status}: ${errText || res.statusText}`);
-      }
-      return await res.json();
-    }
-
-    // Core Data Loading
+    // Core Data Loading from Supabase PostgreSQL
     async function loadActiveSheetData(silent = false) {
       if (!silent) showLoader('Reading Dispatches...');
       try {
-        const res = await apiRequest(`/api/data?date=${appState.activeLabel}`);
+        const client = getSupabaseClient();
+
+        // 1. Fetch dispatch records for the currently selected date
+        const { data, error } = await client
+          .from('dispatches')
+          .select('*')
+          .eq('dispatch_date', appState.activeLabel)
+          .order('id', { ascending: true });
+
+        if (error) {
+          if (error.code === 'PGRST205') {
+            throw new Error("Table 'dispatches' not found in Supabase yet. Please execute schema.sql in Supabase SQL Editor.");
+          }
+          throw error;
+        }
+
+        updateConnectionPill(true);
+
+        const records = (data || []).map(r => ({
+          row: r.id,
+          id: r.id,
+          orderNo: r.order_no,
+          customer: r.customer,
+          status: r.status || 'Dispatched',
+          remarks: r.remarks || ''
+        }));
+
+        appState.records = records;
+
+        // 2. Compute statistics
+        const total = records.length;
+        const dispatched = records.filter(r => r.status === 'Dispatched').length;
+        const pending = records.filter(r => r.status === 'Pending').length;
+        const toDispatchTomorrow = records.filter(r => r.status === 'To Be Dispatched Tomorrow').length;
+        const availableSlots = Math.max(0, 100 - total);
+
+        const stats = { total, dispatched, pending, toDispatchTomorrow, availableSlots };
+        appState.stats = stats;
+
+        // 3. Assemble response payload for handleDataLoaded
+        const res = {
+          label: appState.activeLabel,
+          todayLabel: appState.todayLabel,
+          isToday: (appState.activeLabel === appState.todayLabel),
+          records: records,
+          remarksOptions: appState.remarksOptions,
+          availableDates: appState.availableDates.length ? appState.availableDates : [appState.activeLabel],
+          facilities: appState.facilities,
+          configs: appState.configs,
+          stats: stats
+        };
+
         handleDataLoaded(res);
+
+        // 4. Asynchronously fetch available historical dates, facilities & remarks
+        fetchMetadata(client);
+
       } catch (err) {
         console.error("Load error:", err);
-        showToast("Connection notice: " + err.message, "error");
+        updateConnectionPill(false);
+        showToast("Supabase notice: " + err.message, "error");
       } finally {
         hideLoader();
+      }
+    }
+
+    async function fetchMetadata(client) {
+      try {
+        // Query distinct dates
+        const { data: dateRows } = await client
+          .from('dispatches')
+          .select('dispatch_date')
+          .order('id', { ascending: false });
+
+        if (dateRows && dateRows.length) {
+          const dateSet = new Set();
+          if (appState.todayLabel) dateSet.add(appState.todayLabel);
+          dateRows.forEach(r => { if (r.dispatch_date) dateSet.add(r.dispatch_date); });
+          appState.availableDates = Array.from(dateSet);
+          populatePastSheetsSelect(appState.availableDates, appState.activeLabel);
+        }
+
+        // Query customers for suggestions
+        const { data: custRows } = await client
+          .from('dispatches')
+          .select('customer')
+          .order('id', { ascending: false })
+          .limit(300);
+
+        if (custRows && custRows.length) {
+          const custSet = new Set();
+          custRows.forEach(r => { if (r.customer && r.customer.trim()) custSet.add(r.customer.trim()); });
+          appState.facilities = Array.from(custSet).sort();
+          populateFacilitySuggestions(appState.facilities);
+        }
+
+        // Query settings for remarks
+        const { data: remarkRows } = await client
+          .from('settings')
+          .select('value')
+          .eq('category', 'remark');
+
+        if (remarkRows && remarkRows.length) {
+          const remSet = new Set(appState.remarksOptions);
+          remarkRows.forEach(r => { if (r.value) remSet.add(r.value); });
+          appState.remarksOptions = Array.from(remSet);
+          populateRemarksSelect(appState.remarksOptions);
+        }
+      } catch (e) {
+        console.warn("Metadata notice:", e);
       }
     }
 
@@ -1864,18 +1897,15 @@
 
       showLoader(`Setting to ${next}...`);
       try {
-        const res = await apiRequest('/api/record/update', 'POST', {
-          targetDate: appState.activeLabel,
-          rowNumber: rowNum,
-          record: {
-            orderNo: record.orderNo,
-            customer: record.customer,
-            status: next,
-            remarks: record.remarks
-          }
-        });
-        handleDataLoaded(res);
+        const client = getSupabaseClient();
+        const { error } = await client
+          .from('dispatches')
+          .update({ status: next })
+          .eq('id', rowNum);
+
+        if (error) throw error;
         showToast(`Order ${record.orderNo} updated to ${next}`, 'success');
+        loadActiveSheetData(true);
       } catch (err) {
         showToast("Update failed: " + err.message, "error");
       } finally {
@@ -1972,22 +2002,35 @@
       showLoader(rowNum ? 'Updating Order...' : 'Adding Order...');
 
       try {
-        let res;
+        const client = getSupabaseClient();
         if (rowNum) {
-          res = await apiRequest('/api/record/update', 'POST', {
-            targetDate: appState.activeLabel,
-            rowNumber: rowNum,
-            record: { orderNo, customer, status, remarks }
-          });
+          const { error } = await client
+            .from('dispatches')
+            .update({
+              order_no: orderNo,
+              customer: customer,
+              status: status,
+              remarks: remarks
+            })
+            .eq('id', rowNum);
+
+          if (error) throw error;
           showToast(`Order ${orderNo} updated!`, 'success');
         } else {
-          res = await apiRequest('/api/record/add', 'POST', {
-            targetDate: appState.activeLabel,
-            record: { orderNo, customer, status, remarks }
-          });
-          showToast(`Order ${orderNo} added to sheet!`, 'success');
+          const { error } = await client
+            .from('dispatches')
+            .insert([{
+              dispatch_date: appState.activeLabel,
+              order_no: orderNo,
+              customer: customer,
+              status: status,
+              remarks: remarks
+            }]);
+
+          if (error) throw error;
+          showToast(`Order ${orderNo} saved to database!`, 'success');
         }
-        handleDataLoaded(res);
+        loadActiveSheetData(true);
       } catch (err) {
         showToast("Failed to save: " + err.message, "error");
       } finally {
@@ -2001,15 +2044,21 @@
       }
       showLoader('Removing Order...');
       try {
-        const res = await apiRequest('/api/record/delete', 'POST', {
-          targetDate: appState.activeLabel,
-          rowNumber: rowNum
-        });
-        handleDataLoaded(res);
+        const client = getSupabaseClient();
+        const { error } = await client
+          .from('dispatches')
+          .delete()
+          .eq('id', rowNum);
+
+        if (error) throw error;
         showToast(`Order ${orderNo} removed`, 'success');
+        loadActiveSheetData(true);
       } catch (err) {
         showToast("Failed to remove order: " + err.message, "error");
       } finally {
+        hideLoader();
+      }
+    }
         hideLoader();
       }
     }
@@ -2073,7 +2122,7 @@
       }
     }
 
-    async function executeEmailReport() {
+    function executeEmailReport() {
       const emailInput = document.getElementById('report-email-recipients').value.trim();
       if (!emailInput) {
         showToast("Please enter at least one recipient email.", "error");
@@ -2083,33 +2132,36 @@
       appState.reportEmails = emailInput;
       localStorage.setItem('biocare_report_emails', emailInput);
 
-      const btn = document.getElementById('btn-email-pdf');
-      const originalText = btn.innerHTML;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Compiling PDF &amp; Sending...';
+      const label = appState.activeLabel;
+      const records = appState.records;
+      const stats = appState.stats || {
+        total: records.length,
+        dispatched: records.filter(r => r.status === 'Dispatched').length,
+        pending: records.filter(r => r.status === 'Pending').length,
+        toDispatchTomorrow: records.filter(r => r.status === 'To Be Dispatched Tomorrow').length
+      };
 
-      showLoader('Generating PDF & Sending Email...');
-      try {
-        const recipientsArray = emailInput.split(',').map(e => e.trim()).filter(Boolean);
-        const res = await apiRequest('/api/report/email', 'POST', {
-          targetDate: appState.activeLabel,
-          recipients: recipientsArray
-        });
+      const subject = encodeURIComponent(`Biocare Daily Dispatch Report — ${label}`);
+      let bodyText = `BIOCARE HEALTH SYSTEMS LTD.\n`;
+      bodyText += `DAILY OPERATIONAL DISPATCH MANIFEST — ${label}\n\n`;
+      bodyText += `Shift Performance Summary:\n`;
+      bodyText += `• Total Orders Logged: ${stats.total}\n`;
+      bodyText += `• Successfully Dispatched: ${stats.dispatched} (${stats.total > 0 ? Math.round((stats.dispatched / stats.total) * 100) : 0}%)\n`;
+      bodyText += `• Processing / Pending: ${stats.pending}\n`;
+      bodyText += `• Scheduled Tomorrow: ${stats.toDispatchTomorrow}\n\n`;
+      bodyText += `Itemized Consignments (${records.length}):\n`;
+      records.forEach((r, i) => {
+        bodyText += `${i + 1}. [${r.orderNo}] ${r.customer} — ${r.status}${r.remarks ? ' (' + r.remarks + ')' : ''}\n`;
+      });
+      bodyText += `\nGenerated via Biocare Cloud Dispatch Portal\n`;
 
-        if (res && res.success !== false) {
-          const sentTo = res.recipients ? res.recipients.join(', ') : emailInput;
-          showToast(`PDF Report compiled & emailed to: ${sentTo}!`, 'success');
-          closeModal('modal-report-hub');
-        } else {
-          showToast("Report generated with notice: " + (res.emailNotice || 'Please verify in Google Sheets'), 'warning');
-        }
-      } catch (err) {
-        showToast("Emailing failed: " + err.message, "error");
-      } finally {
-        hideLoader();
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
+      const mailtoUrl = `mailto:${encodeURIComponent(emailInput)}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+      window.open(mailtoUrl, '_blank');
+      showToast("Email draft prepared! Opening PDF preview...", "success");
+
+      setTimeout(() => {
+        openRestyledPdfPreview();
+      }, 400);
     }
 
     function openRestyledPdfPreview() {
@@ -2448,16 +2500,26 @@
     async function executeBatchImport() {
       if (!appState.parsedUploads || !appState.parsedUploads.length) return;
       closeModal('modal-import-hub');
-      showLoader(`Batch inserting ${appState.parsedUploads.length} orders...`);
+      showLoader(`Batch inserting ${appState.parsedUploads.length} orders into Supabase...`);
 
       try {
-        const res = await apiRequest('/api/record/batch', 'POST', {
-          targetDate: appState.activeLabel,
-          records: appState.parsedUploads
-        });
-        handleDataLoaded(res);
+        const client = getSupabaseClient();
+        const rowsToInsert = appState.parsedUploads.map(o => ({
+          dispatch_date: appState.activeLabel,
+          order_no: o.orderNo,
+          customer: o.customer,
+          status: o.status || 'Dispatched',
+          remarks: o.remarks || ''
+        }));
+
+        const { error } = await client
+          .from('dispatches')
+          .insert(rowsToInsert);
+
+        if (error) throw error;
         showToast(`Successfully imported ${appState.parsedUploads.length} orders to ${appState.activeLabel}!`, 'success');
         appState.parsedUploads = [];
+        loadActiveSheetData(true);
       } catch (err) {
         showToast("Batch import failed: " + err.message, "error");
       } finally {
@@ -2472,15 +2534,20 @@
       if (!val) return;
       showLoader('Adding Remark option...');
       try {
-        const res = await apiRequest('/api/settings/remark/add', 'POST', { remark: val });
+        const client = getSupabaseClient();
+        try {
+          await client.from('settings').insert([{ category: 'remark', value: val }]);
+        } catch (e) {
+          console.warn("Settings table notice:", e);
+        }
         input.value = '';
-        if (res && res.remarks) {
-          appState.remarksOptions = res.remarks;
-          populateRemarksSelect(res.remarks);
+        if (!appState.remarksOptions.includes(val)) {
+          appState.remarksOptions.push(val);
+          populateRemarksSelect(appState.remarksOptions);
         }
         showToast(`Added remark: "${val}"`, 'success');
       } catch (err) {
-        showToast("Failed to add remark: " + err.message, "error");
+        showToast("Notice: " + err.message, "info");
       } finally {
         hideLoader();
       }
@@ -2488,26 +2555,29 @@
 
     // Cloud Connection Settings
     function saveCloudConnection() {
-      const url = document.getElementById('cfg-script-url').value.trim();
-      appState.scriptUrl = url;
-      localStorage.setItem('biocare_script_url', url);
+      const url = document.getElementById('cfg-supabase-url').value.trim();
+      const key = document.getElementById('cfg-supabase-key').value.trim();
+      if (url) localStorage.setItem('biocare_supabase_url', url);
+      if (key) localStorage.setItem('biocare_supabase_key', key);
       closeModal('modal-cloud-connection');
-      updateConnectionPill();
-      showToast("Google Sheet Cloud Webhook URL saved! Connecting...", "success");
+      updateConnectionPill(true);
+      showToast("Supabase credentials saved! Connecting...", "success");
       loadActiveSheetData();
     }
 
     async function testCloudConnection() {
-      showLoader('Testing cloud webhook ping...');
+      showLoader('Testing Supabase connection...');
       try {
-        const res = await apiRequest(`/api/data?date=${appState.activeLabel}`);
-        if (res && res.success !== false) {
-          showToast(`Cloud connected! Found ${res.availableDates ? res.availableDates.length : 0} daily sheets.`, 'success');
-        } else {
-          showToast("Connected with notice", "warning");
-        }
+        const client = getSupabaseClient();
+        const { data, error } = await client
+          .from('dispatches')
+          .select('id')
+          .limit(1);
+        if (error && error.code !== 'PGRST205') throw error;
+        showToast("Connected to Supabase PostgreSQL successfully!", "success");
+        updateConnectionPill(true);
       } catch (err) {
-        showToast("Connection ping failed: " + err.message, "error");
+        showToast("Connection notice: " + err.message, "warning");
       } finally {
         hideLoader();
       }

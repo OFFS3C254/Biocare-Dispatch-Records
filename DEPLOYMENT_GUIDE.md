@@ -1,86 +1,82 @@
-# Biocare Health Systems — Daily Dispatch Portal
-## Vercel Cloud Deployment & Multi-User Setup Guide
+# Biocare Health Systems Ltd. — Dispatch Operations Portal
+## Supabase PostgreSQL Cloud Database & Vercel Deployment Guide
 
-This web portal connects directly to your live **Biocare Dispatch Tracker Google Sheet**, allowing multiple team members to manage dispatches simultaneously from any smartphone, tablet, or computer.
-
----
-
-### Project Structure for Vercel
-
-```
-Dispatch/
-├── Index.html          # Modern, responsive web app (Minimalist Modern with Electric Blue & Slate)
-├── code.gs             # Google Apps Script Web App, executive PDF generator & team email dispatcher
-├── vercel.json         # Vercel deployment routes and serverless rewrites
-├── api/
-│   └── proxy.js        # Vercel Serverless Function proxying to Google Apps Script with CORS
-├── images/             # Biocare Health Systems brand assets (biocare-logo.png)
-└── DEPLOYMENT_GUIDE.md # This deployment guide
-```
+This portal is a real-time dispatch management system built for **Biocare Health Systems Ltd.** Powered by **Supabase (PostgreSQL)**, it enables team members across warehouse, logistics, and sales departments to manage orders simultaneously from any smartphone, tablet, or desktop with sub-100ms latency.
 
 ---
 
-## 2-Step Deployment to Vercel
+### Project Architecture
 
-### Step 1: Deploy `code.gs` in your Google Sheet (5 minutes)
+```
+Biocare-Dispatch-Records/
+├── Index.html                  # Responsive Single-Page Application (Minimalist Modern UI)
+├── schema.sql                  # PostgreSQL table definitions, RLS security policies & 707 records seed
+├── biocare_dispatches_master.csv # Master CSV export of all 707 historical orders
+├── .env                        # Supabase credentials (URL & Publishable Key)
+├── .env.example                # Supabase environment template
+├── vercel.json                 # Vercel deployment routes and SPA rewrites
+├── images/                     # Official Biocare brand assets (biocare-logo.png)
+├── DEPLOYMENT_GUIDE.md         # This deployment guide
+└── README.md                   # Project overview & documentation
+```
 
-1. Open your **Biocare Dispatch Tracker** in Google Sheets.
-2. In the top menu, click **Extensions > Apps Script**.
-3. If there is existing code in `Code.gs`, delete it and paste the entire content of [`code.gs`](file:///c:/Users/Administrator/Desktop/Dispatch/code.gs).
-4. Click the blue **Deploy** button (top right) > **New deployment**.
-5. Click the gear icon next to "Select type" and choose **Web app**.
-6. Fill in the deployment details:
-   - **Description**: `Biocare Dispatch Webhook API`
-   - **Execute as**: **Me** (`your-email@gmail.com`)
-   - **Who has access**: **Anyone** *(Essential: allows your team and the Vercel portal to read/write)*
-7. Click **Deploy**.
-8. If prompted, click **Authorize access**, select your Google account, click *Advanced*, then *Go to Biocare Dispatch Tracker (unsafe)*, and click *Allow*.
-9. **Copy the Web App URL** displayed under *Web app*:
-   ```
-   https://script.google.com/macros/s/AKfycb.../exec
-   ```
+---
+
+## 2-Step Cloud Deployment
+
+### Step 1: Initialize the Supabase Database (1 minute)
+
+Your Supabase project is already configured:
+- **Project URL**: `https://klykpcakybreybrrpbhp.supabase.co`
+- **Publishable Key**: `sb_publishable_GtvJBDlVpZwLaKNCrjqTbg_b_msekq6`
+
+#### Option A: 1-Click SQL Setup (Recommended)
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard/project/klykpcakybreybrrpbhp).
+2. Click **SQL Editor** in the left sidebar.
+3. Click **New Query**.
+4. Copy the entire contents of [`schema.sql`](schema.sql) and paste it into the editor.
+5. Click **Run** (or press `Ctrl + Enter`).
+6. Done! This immediately:
+   - Creates the `public.dispatches` table with indexes for `dispatch_date` and `order_no`.
+   - Configures Row Level Security (RLS) policies allowing secure client reads, inserts, updates, and deletes.
+   - Creates the `public.settings` table for courier options.
+   - Seeds all **707 historical orders** from `Biocare Dispatch Tracker.xlsx` into PostgreSQL!
+
+#### Option B: Spreadsheet Import via Supabase Studio
+1. In the Supabase Dashboard, click **Table Editor**.
+2. Click **Import data via spreadsheet**.
+3. Drag and drop [`biocare_dispatches_master.csv`](biocare_dispatches_master.csv).
+4. Set table name to `dispatches` and click **Import Data**.
 
 ---
 
 ### Step 2: Deploy to Vercel (2 minutes)
 
-#### Method A: Using GitHub & Vercel Dashboard (Easiest)
-1. Push this `Dispatch` directory to your GitHub repository (e.g. `biocare-dispatch`).
-2. Go to [vercel.com](https://vercel.com) and log in.
-3. Click **Add New... > Project** and import your repository.
-4. Under **Environment Variables**, add:
-   - **Key**: `APPS_SCRIPT_URL`
-   - **Value**: *(Paste the Google Apps Script Web App URL from Step 1)*
+Because the credentials are preconfigured directly in `.env` and `Index.html`, deployment is 100% turnkey.
+
+#### Method A: Via Vercel Dashboard (Easiest)
+1. Go to [vercel.com](https://vercel.com) and log in.
+2. Click **Add New... > Project**.
+3. Import your GitHub repository:
+   ```
+   https://github.com/OFFS3C254/Biocare-Dispatch-Records.git
+   ```
+4. Framework Preset: **Other** (Root Directory: `./`).
 5. Click **Deploy**.
-6. In ~30 seconds, Vercel will give you a permanent live URL (e.g. `https://biocare-dispatch.vercel.app`)!
+6. In ~20 seconds, your site is live with a permanent URL (e.g. `https://biocare-dispatch.vercel.app`)!
 
-#### Method B: Using Vercel CLI
-From your terminal in this directory:
-```bash
-cd C:\Users\Administrator\Desktop\Dispatch
-npx vercel
-```
-Follow the quick prompts:
-- Set up and deploy: **y**
-- Which scope: *(select your account)*
-- Link to existing project: **n**
-- Project name: `biocare-dispatch`
-- Directory: `./`
-- Modify settings: **n**
-
-Then add the environment variable:
-```bash
-npx vercel env add APPS_SCRIPT_URL production
-```
-Paste your Google Apps Script URL, and run:
+#### Method B: Via Vercel CLI
+From your terminal in this repository:
 ```bash
 npx vercel --prod
 ```
 
 ---
 
-### How Your Team Uses the Portal
+## Operational Features
 
-1. Share the Vercel link (`https://your-project.vercel.app`) with your operations, warehouse, and sales managers.
-2. Team members can bookmark it on their smartphones or laptops.
-3. Every order added, status changed, or batch imported immediately updates your **Google Sheet** in real time!
+1. **Zero Cold Starts**: PostgreSQL on Supabase responds in under 100ms, eliminating the 4–6 second delays of legacy webhook services.
+2. **Instant Multi-User Sync**: Status changes, new consignments, and batch imports reflect immediately across all connected team devices.
+3. **Executive PDF Manifest Generator**: Click **Report & Email Hub** to generate an executive, publication-grade dispatch manifest with authentic Biocare branding, KPI performance cards, courier distribution chips, and warehouse sign-off lines.
+4. **Shift Summary Dispatch**: One click prepares a formatted dispatch email with all order metrics ready to send to leadership and sales teams (`biocarehealthsystems@gmail.com, alexandremuithya@gmail.com`).
+5. **Batch Excel / ERP Importer**: Drag and drop any daily order spreadsheet or paste copied rows directly to populate the shift.

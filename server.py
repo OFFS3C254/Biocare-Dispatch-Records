@@ -2,7 +2,7 @@
 Biocare Dispatch Portal — Local Backend Server (server.py)
 ---------------------------------------------------------
 Directly reads and writes 'Biocare Dispatch Tracker.xlsx'.
-Provides REST API endpoints identical to Google Apps Script.
+Provides REST API endpoints and local offline file support.
 Serves Index.html at http://localhost:5000 with CORS and auto-backup support.
 """
 

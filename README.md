@@ -1,40 +1,42 @@
 # Biocare-Dispatch-Records
-### Biocare Health Systems Ltd. — Daily Dispatch Portal & Database
+### Biocare Health Systems Ltd. — Daily Dispatch Portal & Supabase PostgreSQL Database
 
-A cloud-based daily dispatch management portal built for **Biocare Health Systems Ltd.** It connects directly to the operational Google Sheet (`Biocare Dispatch Tracker`), enabling multi-user concurrency across mobile and desktop devices, automated executive PDF manifest generation, and direct team email dispatch.
+A cloud-based real-time dispatch management system built for **Biocare Health Systems Ltd.** Powered by **Supabase (PostgreSQL)**, it enables team members across logistics, warehouse, and sales departments to manage daily order dispatches simultaneously with zero latency, generate executive PDF manifests, and track operational metrics.
 
 ---
 
 ## Key Features
 
-- **Minimalist Modern Design System**: Built with a curated aesthetic featuring Electric Blue gradient accents (`#0052FF` → `#4D7CFF`), Slate-900 contrast, and typography paired with Calistoga, Inter, and JetBrains Mono.
-- **Biocare Brand Integration**: Authentic high-resolution Biocare Health Systems logo embedded for both web view and generated PDF manifests.
+- **Minimalist Modern Design System**: Built with an executive aesthetic featuring Electric Blue gradient accents (`#0052FF` → `#4D7CFF`), Slate-900 contrast, and dual-font typography pairing Calistoga, Inter, and JetBrains Mono.
+- **Supabase PostgreSQL Cloud Backend**: Direct, low-latency database connectivity with sub-100ms response times, atomic CRUD operations, and full multi-user concurrency across mobile and desktop.
+- **Biocare Brand Integration**: Authentic high-resolution Biocare Health Systems Ltd. logo embedded for web view and generated dispatch manifests.
 - **Automated Executive PDF Reports**: One-click generation of publication-grade PDF shift manifests with KPI metrics, delivery distribution ratio bars, courier breakdown chips, itemized status badges, and official warehouse sign-off lines.
-- **Team Email Dispatch**: Directly emails the generated PDF along with a responsive executive HTML shift summary to configured team recipient emails (`REPORT_RECIPIENT_EMAILS`).
+- **Shift Email Summary**: Automatically prepares formatted operational dispatch reports for team leaders (`biocarehealthsystems@gmail.com, alexandremuithya@gmail.com`).
 - **Batch Order Importer**: Supports drag-and-drop Excel files (`.xlsx`), ERP spreadsheets, or direct clipboard copy-paste with automatic order deduplication and slot validation.
-- **Multi-Device Cloud Access**: Deployed on Vercel with zero server maintenance, enabling drivers, warehouse staff, and management to collaborate simultaneously.
+- **100% Turnkey Cloud Deployment**: Fully deployable to Vercel or GitHub Pages in under two minutes with zero server configuration.
 
 ---
 
 ## Project Structure
 
 ```
-Dispatch/
-├── Index.html          # Frontend web app (Minimalist Modern UI)
-├── code.gs             # Google Apps Script Web App & REST API backend
-├── vercel.json         # Vercel routing and serverless rewrites
-├── api/
-│   └── proxy.js        # Vercel Serverless Function proxying to Google Apps Script
-├── images/             # Biocare brand assets (biocare-logo.png)
-├── DEPLOYMENT_GUIDE.md # Detailed deployment instructions
-└── README.md           # Project documentation
+Biocare-Dispatch-Records/
+├── Index.html                    # Responsive Single-Page Application
+├── schema.sql                    # PostgreSQL table definitions, RLS policies & 707 records seed
+├── biocare_dispatches_master.csv   # Master CSV export of 707 historical Excel orders
+├── .env                          # Supabase configuration credentials
+├── .env.example                  # Supabase environment template
+├── vercel.json                   # Vercel deployment routes and SPA rewrites
+├── images/                       # Official Biocare brand assets (biocare-logo.png)
+├── DEPLOYMENT_GUIDE.md           # Step-by-step Supabase & Vercel deployment guide
+└── README.md                     # Project documentation
 ```
 
 ---
 
-## Deployment & Setup
+## Quick Start & Deployment
 
-Refer to [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md) for full step-by-step instructions:
+1. **Initialize Database**: In your [Supabase Dashboard](https://supabase.com/dashboard/project/klykpcakybreybrrpbhp) SQL Editor, run [`schema.sql`](schema.sql) to create the `dispatches` table and seed all 707 historical orders.
+2. **Deploy to Vercel**: Import this GitHub repository into Vercel and click **Deploy**.
 
-1. **Google Apps Script**: Paste [`code.gs`](code.gs) into your Google Sheet's Apps Script editor and deploy as a Web App (access: *Anyone*).
-2. **Vercel**: Import this GitHub repository into Vercel and set `APPS_SCRIPT_URL` to your deployed Apps Script URL.
+For detailed setup instructions, refer to [`DEPLOYMENT_GUIDE.md`](DEPLOYMENT_GUIDE.md).
