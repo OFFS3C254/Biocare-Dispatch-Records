@@ -19,8 +19,6 @@
   <!-- Supabase Client v2 for Cloud PostgreSQL Backend -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- EmailJS Browser SDK v4 for Automated Direct Email Dispatch (Zero mailto:) -->
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
   <style>
     /* ======================================================================
@@ -1608,29 +1606,11 @@
 
         <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:12px; margin-bottom:14px;">
           <div style="display:flex; align-items:center; gap:8px; font-weight:700; color:#1D4ED8; font-size:0.86rem; margin-bottom:4px;">
-            <i class="bi bi-lightning-charge-fill"></i> Client-Side Dispatch (EmailJS)
+            <i class="bi bi-file-earmark-pdf-fill"></i> Instant PDF Download &amp; Mail Client Fallback
           </div>
           <div style="font-size:0.78rem; color:#1E3A8A; line-height:1.4;">
-            For pure in-browser sending when running without local Python backend.
+            If direct server SMTP is not configured above, sending a report will automatically download the executive PDF manifest directly to your device and launch your mail application pre-loaded with the shift summary.
           </div>
-        </div>
-
-        <div class="input-group">
-          <label class="input-label" for="cfg-emailjs-service">EmailJS Service ID</label>
-          <input type="text" id="cfg-emailjs-service" class="text-input" placeholder="service_biocare" value="service_biocare">
-          <span style="font-size:0.72rem; color:var(--muted-foreground); margin-top:2px;">Service linked to Gmail (muithyaalex2@gmail.com)</span>
-        </div>
-
-        <div class="input-group">
-          <label class="input-label" for="cfg-emailjs-template">EmailJS Template ID</label>
-          <input type="text" id="cfg-emailjs-template" class="text-input" placeholder="template_dispatch" value="template_dispatch">
-          <span style="font-size:0.72rem; color:var(--muted-foreground); margin-top:2px;">Template created in your EmailJS dashboard</span>
-        </div>
-
-        <div class="input-group">
-          <label class="input-label" for="cfg-emailjs-key">EmailJS Public Key (User ID)</label>
-          <input type="text" id="cfg-emailjs-key" class="text-input" placeholder="e.g. u1A2b3C4d5E6f7G8h">
-          <span style="font-size:0.72rem; color:var(--muted-foreground); margin-top:2px;">Found under Account &gt; General &gt; Public Key in EmailJS</span>
         </div>
       </div>
       <div class="modal-actions-bar">
@@ -1859,12 +1839,7 @@
       parsedUploads: [],
       stats: { total: 0, dispatched: 0, pending: 0, toDispatchTomorrow: 0, availableSlots: 100 },
       senderEmail: localStorage.getItem('biocare_sender_email') || 'muithyaalex2@gmail.com',
-      reportEmails: localStorage.getItem('biocare_report_emails') || 'alexandremuithya@gmail.com, biocarehealthsystems@gmail.com',
-      emailjsConfig: {
-        serviceId: localStorage.getItem('biocare_emailjs_service') || 'service_biocare',
-        templateId: localStorage.getItem('biocare_emailjs_template') || 'template_dispatch',
-        publicKey: localStorage.getItem('biocare_emailjs_key') || ''
-      }
+      reportEmails: localStorage.getItem('biocare_report_emails') || 'alexandremuithya@gmail.com, biocarehealthsystems@gmail.com'
     };
 
     // UI Initializer
@@ -2560,40 +2535,27 @@
         // server offline or relay unavailable
       }
 
-      // 2. Try EmailJS client-side
-      const serviceId = localStorage.getItem('biocare_emailjs_service') || 'service_biocare';
-      const templateId = localStorage.getItem('biocare_emailjs_template') || 'template_dispatch';
-      const publicKey = localStorage.getItem('biocare_emailjs_key') || '';
-
-      if (publicKey && typeof emailjs !== 'undefined') {
-        try {
-          emailjs.init({ publicKey });
-          for (const toEmail of recipients) {
-            await emailjs.send(serviceId, templateId, {
-              to_email: toEmail,
-              from_name: 'Biocare Dispatch Operations',
-              sender_email: appState.senderEmail || 'muithyaalex2@gmail.com',
-              reply_to: appState.senderEmail || 'muithyaalex2@gmail.com',
-              subject: subject,
-              message: messageText,
-              content: messageText,
-              shift_date: label
-            });
-          }
-          hideLoader();
-          showToast(`✓ "Daily Dispatch Report." sent to ${recipients.join(', ')}!`, 'success');
-          return;
-        } catch (err) {
-          hideLoader();
-          showToast(`EmailJS notice: ${err.text || err.message}`, 'error');
-          openEmailSettingsModal();
-          return;
-        }
-      }
-
+      // 2. Direct Fallback: Trigger PDF Download & Mailto composer
       hideLoader();
-      showToast("To email the PDF attachment, enter your Google App Password or EmailJS Key in Gateway Settings.", "warning");
-      openEmailSettingsModal();
+
+      // Trigger direct PDF export download link
+      const downloadUrl = `/api/export/pdf?date=${encodeURIComponent(label)}`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Biocare_Dispatch_Report_${label}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Open pre-filled mailto link
+      const bodySummary = `Daily Dispatch Report — ${label}\n\nShift Summary:\n- Total Orders: ${appState.stats.total}\n- Dispatched: ${appState.stats.dispatched}\n- Pending: ${appState.stats.pending}\n- To Dispatch Tomorrow: ${appState.stats.toDispatchTomorrow}\n\nPlease attach the downloaded PDF report file.`;
+      const mailtoUrl = `mailto:${encodeURIComponent(recipients.join(','))}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodySummary)}`;
+
+      setTimeout(() => {
+        window.location.href = mailtoUrl;
+      }, 400);
+
+      showToast("PDF report downloaded! Mail client opened with shift summary. (Set Google App Password in Settings for direct automated email attachments)", "info");
     }
 
     function openRestyledPdfPreview() {
@@ -3026,9 +2988,6 @@
       document.getElementById('cfg-sender-email').value = localStorage.getItem('biocare_sender_email') || 'muithyaalex2@gmail.com';
       const appPassInput = document.getElementById('cfg-app-password');
       if (appPassInput) appPassInput.value = localStorage.getItem('biocare_app_password') || '';
-      document.getElementById('cfg-emailjs-service').value = localStorage.getItem('biocare_emailjs_service') || 'service_biocare';
-      document.getElementById('cfg-emailjs-template').value = localStorage.getItem('biocare_emailjs_template') || 'template_dispatch';
-      document.getElementById('cfg-emailjs-key').value = localStorage.getItem('biocare_emailjs_key') || '';
       openModal('modal-email-settings');
     }
 
@@ -3036,47 +2995,34 @@
       const sender = document.getElementById('cfg-sender-email').value.trim() || 'muithyaalex2@gmail.com';
       const appPassInput = document.getElementById('cfg-app-password');
       const appPass = appPassInput ? appPassInput.value.trim() : '';
-      const service = document.getElementById('cfg-emailjs-service').value.trim() || 'service_biocare';
-      const template = document.getElementById('cfg-emailjs-template').value.trim() || 'template_dispatch';
-      const key = document.getElementById('cfg-emailjs-key').value.trim();
 
       localStorage.setItem('biocare_sender_email', sender);
       if (appPass) localStorage.setItem('biocare_app_password', appPass);
-      localStorage.setItem('biocare_emailjs_service', service);
-      localStorage.setItem('biocare_emailjs_template', template);
-      localStorage.setItem('biocare_emailjs_key', key);
 
       appState.senderEmail = sender;
-      appState.emailjsConfig = { serviceId: service, templateId: template, publicKey: key };
 
       const senderDisplay = document.getElementById('report-sender-display');
       if (senderDisplay) senderDisplay.innerText = sender;
 
       updateEmailGatewayStatus();
       closeModal('modal-email-settings');
-      showToast("Email automation settings saved! PDF attachment ready.", "success");
+      showToast("Email settings saved! PDF attachment ready.", "success");
     }
 
     function updateEmailGatewayStatus() {
       const appPass = localStorage.getItem('biocare_app_password');
-      const key = localStorage.getItem('biocare_emailjs_key');
       const statusEl = document.getElementById('email-gateway-status');
       if (!statusEl) return;
       if (appPass) {
         statusEl.innerHTML = '<i class="bi bi-shield-check text-success"></i> Direct PDF Email Active (Gmail SMTP)';
-      } else if (key) {
-        statusEl.innerHTML = '<i class="bi bi-shield-check text-success"></i> Direct Silent Dispatch Active (EmailJS)';
       } else {
-        statusEl.innerHTML = '<i class="bi bi-info-circle text-primary"></i> Direct Silent Dispatch (Configure App Password or EmailJS)';
+        statusEl.innerHTML = '<i class="bi bi-info-circle text-primary"></i> PDF Download &amp; Mail App Fallback Active (Configure App Password for Direct Email)';
       }
     }
 
     async function testEmailConnection() {
       const appPassInput = document.getElementById('cfg-app-password');
       const appPass = (appPassInput ? appPassInput.value.trim() : '') || localStorage.getItem('biocare_app_password') || '';
-      const key = document.getElementById('cfg-emailjs-key').value.trim();
-      const service = document.getElementById('cfg-emailjs-service').value.trim();
-      const template = document.getElementById('cfg-emailjs-template').value.trim();
       const sender = document.getElementById('cfg-sender-email').value.trim() || 'muithyaalex2@gmail.com';
       const recipients = (document.getElementById('report-email-recipients')?.value || 'alexandremuithya@gmail.com').split(',')[0].trim();
 
@@ -3097,40 +3043,20 @@
           const res = await resp.json();
           hideLoader();
           if (res && res.sent) {
-            showToast(`✓ Test PDF email sent via Gmail to ${recipients}!`, 'success');
+            showToast(`✓ Test PDF email sent via Gmail SMTP to ${recipients}!`, 'success');
             return;
           } else {
-            showToast(`SMTP notice: ${res.error || res.notice || 'Check password'}`, 'warning');
+            showToast(`SMTP notice: ${res.error || res.notice || 'Check Google App Password'}`, 'warning');
+            return;
           }
         } catch (e) {
           hideLoader();
-        }
-      }
-
-      // Fallback test via EmailJS
-      if (key && typeof emailjs !== 'undefined') {
-        showLoader('Testing EmailJS background delivery...');
-        try {
-          emailjs.init({ publicKey: key });
-          await emailjs.send(service, template, {
-            to_email: recipients,
-            from_name: 'Biocare Test Gateway (' + sender + ')',
-            sender_email: sender,
-            subject: 'Daily Dispatch Report — Test',
-            message: 'Daily Dispatch Report.',
-            content: 'Daily Dispatch Report.'
-          });
-          hideLoader();
-          showToast(`✓ Test email dispatched to ${recipients}!`, 'success');
-          return;
-        } catch (err) {
-          hideLoader();
-          showToast(`EmailJS test notice: ${err.text || err.message}`, 'error');
+          showToast(`Server connection error: ${e.message}`, 'error');
           return;
         }
       }
 
-      showToast("Please enter either your 16-character Google App Password or EmailJS Key to test.", "warning");
+      showToast("Please enter your 16-character Google App Password above to test direct automated PDF email delivery.", "warning");
     }
 
     // Cloud Connection Settings
